@@ -222,3 +222,32 @@ def test_modifica_giacenza_articolo_not_found(db_session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"Articolo con id : 1 non trovato"
+
+def test_get_user_orders(db_session):
+    user_in = UserCreate(first_name="Mario", last_name="Rossi", email="mario.rossi@gmail.com")
+    user = create_user(db=db_session, new_user=user_in)
+
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+
+    ordine_in = OrderCreate(user_id = user.id, articoli=[{"articolo_id" : articolo.id, "quantità" : 10}])
+    ordine = create_order(db=db_session, ordine= ordine_in)
+
+    ordini_user = get_user_orders(user_id=user.id, db=db_session)
+
+    assert ordini_user is not None
+
+def test_get_user_orders_not_found(db_session):
+    user_in = UserCreate(first_name="Mario", last_name="Rossi", email="mario.rossi@gmail.com")
+    user = create_user(db=db_session, new_user=user_in)
+
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+    ordini_user = get_user_orders(user_id=user.id, db=db_session)
+
+    mappa_ordini_user = {ord.id: ord for ord in ordini_user}
+
+    assert len(ordini_user) == 0
+    assert mappa_ordini_user.get(user.id) == None
