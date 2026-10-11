@@ -54,12 +54,16 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
     if not user_exists:
         raise HTTPException(status_code=404, detail="User inesistente!")
 
+    #Trova tutti gli id in user input (OrderCreate)
     articoli_ids = [art.articolo_id for art in ordine.articoli]
 
+    #Cerca gli articoli selezionati nel database
     articoli_selezionati = db.query(Articolo).filter(Articolo.id.in_(articoli_ids)).all()
 
+    #Trasforma gli articoli selezionati in un dizionario, trova l'articolo facilente tramite l'id 
     mappa_articoli_db = {art.id: art for art in articoli_selezionati}
 
+    #Crea l'ordine
     nuovo_ordine = Order(user_id = ordine.user_id)
     db.add(nuovo_ordine)
     db.flush()
@@ -67,6 +71,7 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
 
     totale_ordine : float = 0.0
 
+    #Controlla se l'articolo richiesto è esistente e se la giacenza è sufficiente
     for art_richiesto in ordine.articoli:
         articolo_db = mappa_articoli_db.get(art_richiesto.articolo_id)
 
@@ -76,11 +81,13 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
         if articolo_db.quantità < art_richiesto.quantità:
             raise HTTPException(status_code=404, detail=f"Giacenza insufficente per {articolo_db.name}. Disponibili : {articolo_db.quantità}")
 
-
+        #Toglie la quantità dal magazzino
         articolo_db.quantità -= art_richiesto.quantità
 
+        #Aggiorna il totale dell'ordine
         totale_ordine += articolo_db.prezzo * art_richiesto.quantità
 
+        #Crea l'ordine
         dettaglio = OrderArticolo(
             order_id = nuovo_ordine.id,
             articolo_id= articolo_db.id,
@@ -89,7 +96,7 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
 
         db.add(dettaglio)
 
-
+    
     nuovo_ordine.total = totale_ordine
 
     db.commit()
@@ -191,12 +198,10 @@ def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session):
     if not order_exists:
         raise HTTPException(status_code=404, detail=f"Ordine con id : {order_id} non trovato")
 
+    #Mappa dettaglio e articolo singolo tramite articolo_id
     dettagli = order_exists.dettagli_articoli
-
     dettagli_mappa = {art.articolo_id: art for art in dettagli}
-
     dettaglio = dettagli_mappa.get(nuova_quantità.articolo_id)
-
     articolo = dettaglio.articolo
 
     if not articolo:
@@ -211,13 +216,16 @@ def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session):
             detail=f"Quantità selezionata non disponibile in magazzino, giacenza : {dettaglio.articolo.quantità}"
         )
 
+    #Toglie il costo della quantità dell'articolo precedente
     prezzo_articolo = dettaglio.quantità_ordinata * articolo.prezzo
     order_exists.total -= prezzo_articolo
 
+    #Aggiorna giacenze
     articolo.quantità += dettaglio.quantità_ordinata
     dettaglio.quantità_ordinata = nuova_quantità.quantità
     articolo.quantità -= nuova_quantità.quantità 
 
+    #Aggiunge il costo totale
     order_exists.total += articolo.prezzo * dettaglio.quantità_ordinata
     
     db.commit()
