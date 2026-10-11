@@ -182,3 +182,43 @@ def test_delete_order_not_found(db_session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"Ordine con id : 1 non trovato"
+
+def test_prezzo_articolo(db_session):
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+    nuovo_prezzo = ModificaPrezzoArticolo(prezzo = 20)
+
+    prezzo_articolo(nuovo_prezzo=nuovo_prezzo, articolo_id = articolo.id, db = db_session)
+
+    assert articolo.prezzo == 20
+
+def test_prezzo_articolo_not_found(db_session):
+
+    nuovo_prezzo = ModificaPrezzoArticolo(prezzo = 20)
+
+    with pytest.raises(HTTPException) as exc_info:
+        prezzo_articolo(nuovo_prezzo=nuovo_prezzo, articolo_id = "1", db = db_session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Articolo con id : 1 non trovato"
+
+def test_modifica_giacenza(db_session):
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+    nuova_giacenza = ModificaGiacenzaArticolo(quantità = 2)
+
+    modifica_giacenza(articolo_id = articolo.id, nuova_giacenza=nuova_giacenza, db= db_session)
+
+    assert articolo.quantità == 22
+
+def test_modifica_giacenza_articolo_not_found(db_session):
+
+    nuova_giacenza = ModificaGiacenzaArticolo(quantità = 2)
+
+    with pytest.raises(HTTPException) as exc_info:
+        modifica_giacenza(articolo_id="1", nuova_giacenza=nuova_giacenza, db = db_session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Articolo con id : 1 non trovato"
