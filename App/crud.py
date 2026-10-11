@@ -96,7 +96,7 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
 
         db.add(dettaglio)
 
-    
+
     nuovo_ordine.total = totale_ordine
 
     db.commit()
@@ -192,7 +192,7 @@ def get_user_orders(user_id:int, db:Session) -> list[object]:
 
 
 #Modifica quantità articoli ordinati
-def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session):
+def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session) -> object:
     order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
 
     if not order_exists:

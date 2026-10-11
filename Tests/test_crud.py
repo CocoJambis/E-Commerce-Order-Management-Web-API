@@ -251,3 +251,28 @@ def test_get_user_orders_not_found(db_session):
 
     assert len(ordini_user) == 0
     assert mappa_ordini_user.get(user.id) == None
+
+def test_edit_order(db_session):
+    user_in = UserCreate(first_name="Mario", last_name="Rossi", email="mario.rossi@gmail.com")
+    user = create_user(db=db_session, new_user=user_in)
+
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+
+    ordine_in = OrderCreate(user_id = user.id, articoli=[{"articolo_id" : articolo.id, "quantità" : 10}])
+    ordine = create_order(db=db_session, ordine=ordine_in)
+
+    nuova_quantità = OrderArt(articolo_id = articolo.id,
+                              quantità = 5)
+
+    db_session.commit()
+
+    edit_order(nuova_quantità = nuova_quantità, 
+               order_id = ordine.id,
+               db = db_session)
+
+    assert articolo.quantità == 15
+    assert ordine.total == 50
+
+    
