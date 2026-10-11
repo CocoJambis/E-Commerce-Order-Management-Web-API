@@ -46,6 +46,11 @@ def all_orders(db:Session = Depends(get_db)):
 def lista_articoli_ordinati(ordine_id:int, db:Session = Depends(get_db)):
     return crud.lista_articoli_ordinati_by_order_id(order_id=ordine_id, db=db)
 
+#Lista ordini user
+@app.get("/user/orders/{user_id}", response_model=list[OrderResponse])
+def lista_orders(user_id:int, db:Session = Depends(get_db)):
+    return crud.get_user_orders(user_id=user_id, db=db)
+
 #Modifica prezzo articolo
 @app.put("/articolo/{articolo_id}", response_model=ArticoloResponse)
 def modifica_prezzo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session = Depends(get_db)):

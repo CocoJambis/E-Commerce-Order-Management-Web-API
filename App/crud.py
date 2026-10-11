@@ -173,3 +173,12 @@ def modifica_giacenza(articolo_id:int, nuova_giacenza:ModificaGiacenzaArticolo, 
     articolo_exists.quantità += nuova_giacenza.quantità
     db.commit()
     return articolo_exists
+
+#Visualizza tutti gli ordini di un utente
+def get_user_orders(user_id:int, db:Session) -> list[object]:
+    user_exists = db.query(User).filter(User.id == user_id).one_or_none()
+
+    if not user_exists:
+        raise HTTPException(status_code=404, detail=f"User con id : {user_id} non trovato")
+
+    return user_exists.orders
