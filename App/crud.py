@@ -182,3 +182,39 @@ def get_user_orders(user_id:int, db:Session) -> list[object]:
         raise HTTPException(status_code=404, detail=f"User con id : {user_id} non trovato")
 
     return user_exists.orders
+
+
+#Modifica quantità articoli ordinati
+def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session):
+    order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
+
+    if not order_exists:
+        raise HTTPException(status_code=404, detail=f"Ordine con id : {order_id} non trovato")
+
+    dettagli = order_exists.dettagli_articoli
+
+    dettagli_mappa = {art.articolo_id: art for art in dettagli}
+
+    dettaglio = dettagli_mappa.get(nuova_quantità.articolo_id)
+
+    articolo = dettaglio.articolo
+
+    if not articolo:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Articolo con id : {nuova_quantità.articolo_id} non trovato nell'ordine"
+        )
+
+    if articolo.quantità < nuova_quantità.quantità:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Quantità selezionata non disponibile in magazzino, giacenza : {dettaglio.articolo.quantità}"
+        )
+
+    articolo.quantità += dettaglio.quantità_ordinata
+    dettaglio.quantità_ordinata = nuova_quantità.quantità
+    articolo.quantità -= nuova_quantità.quantità 
+    
+    db.commit()
+    db.refresh(dettaglio)
+    return dettaglio

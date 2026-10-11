@@ -48,13 +48,17 @@ def lista_articoli_ordinati(ordine_id:int, db:Session = Depends(get_db)):
 
 #Lista ordini user
 @app.get("/user/orders/{user_id}", response_model=list[OrderResponse])
-def lista_orders(user_id:int, db:Session = Depends(get_db)):
+def lista_orders_user(user_id:int, db:Session = Depends(get_db)):
     return crud.get_user_orders(user_id=user_id, db=db)
 
 #Modifica prezzo articolo
 @app.put("/articolo/{articolo_id}", response_model=ArticoloResponse)
 def modifica_prezzo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session = Depends(get_db)):
     return crud.prezzo_articolo(nuovo_prezzo=nuovo_prezzo, articolo_id=articolo_id, db=db)
+
+@app.put("/ordinearticolo/{ordine_id}", response_model=ArticoliOrdinati)
+def modifica_quantità_articolo_ordinata(ordine_id:int, nuova_quantità:OrderArt, db:Session = Depends(get_db)):
+    return crud.edit_order(nuova_quantità=nuova_quantità, order_id=ordine_id, db=db)
 
 #Aggiungi quantità disponibile
 @app.put("/articolo/aggiungigiacenza/{articolo_id}", response_model=ArticoloResponse)
