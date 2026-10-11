@@ -153,7 +153,7 @@ def delete_user(user_id:int, db:Session) -> None:
     return f"User con id : {user_id} eliminato dal database!"
 
 #Modifica prezzo articolo
-def prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session):
+def prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session) -> None:
     articolo_exists = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
 
     if not articolo_exists:
@@ -161,4 +161,15 @@ def prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Ses
 
     articolo_exists.prezzo = nuovo_prezzo.prezzo
     db.commit() 
+    return articolo_exists
+
+#Aggiungi quantità disponibile
+def modifica_giacenza(articolo_id:int, nuova_giacenza:ModificaGiacenzaArticolo, db:Session) -> None:
+    articolo_exists = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
+
+    if not articolo_exists:
+        raise HTTPException(status_code=404, detail=f"Articolo con id : {articolo_id} non trovato")
+
+    articolo_exists.quantità += nuova_giacenza.quantità
+    db.commit()
     return articolo_exists

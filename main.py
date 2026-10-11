@@ -51,6 +51,11 @@ def lista_articoli_ordinati(ordine_id:int, db:Session = Depends(get_db)):
 def modifica_prezzo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session = Depends(get_db)):
     return crud.prezzo_articolo(nuovo_prezzo=nuovo_prezzo, articolo_id=articolo_id, db=db)
 
+#Aggiungi quantità disponibile
+@app.put("/articolo/aggiungigiacenza/{articolo_id}", response_model=ArticoloResponse)
+def aggiungi_quantità(nuova_quantità:ModificaGiacenzaArticolo, articolo_id:int, db:Session = Depends(get_db)):
+    return crud.modifica_giacenza(articolo_id = articolo_id, nuova_giacenza=nuova_quantità, db=db)
+
 #Elimina articolo
 @app.delete("/articolo/{articolo_id}")
 def delete_articolo(articolo_id:int, db:Session = Depends(get_db)):

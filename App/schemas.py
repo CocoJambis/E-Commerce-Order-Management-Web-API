@@ -34,6 +34,9 @@ class ArticoloResponse(BaseModel):
 class ModificaPrezzoArticolo(BaseModel):
     prezzo:float
 
+class ModificaGiacenzaArticolo(BaseModel):
+    quantità:int
+
 
 #Order Models
 class OrderArt(BaseModel):
