@@ -211,9 +211,14 @@ def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session):
             detail=f"Quantità selezionata non disponibile in magazzino, giacenza : {dettaglio.articolo.quantità}"
         )
 
+    prezzo_articolo = dettaglio.quantità_ordinata * articolo.prezzo
+    order_exists.total -= prezzo_articolo
+
     articolo.quantità += dettaglio.quantità_ordinata
     dettaglio.quantità_ordinata = nuova_quantità.quantità
     articolo.quantità -= nuova_quantità.quantità 
+
+    order_exists.total += articolo.prezzo * dettaglio.quantità_ordinata
     
     db.commit()
     db.refresh(dettaglio)
