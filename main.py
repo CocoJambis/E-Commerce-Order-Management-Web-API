@@ -1,8 +1,4 @@
-from sqlalchemy.orm import Session
-from fastapi import FastAPI, APIRouter, Depends
-from App.db import get_db
-from App.schemas import *
-import App.crud as crud
+from fastapi import FastAPI
 import uvicorn
 from App.config import settings
 from App.routers import users, orders, articles
