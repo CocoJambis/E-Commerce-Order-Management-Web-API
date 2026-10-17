@@ -7,7 +7,11 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8"
     )
 
-    db_url:str 
+    #DB
+    db_url:str
+    #Server 
     port:int
+    #App
+    version:str
 
 settings = Settings()
