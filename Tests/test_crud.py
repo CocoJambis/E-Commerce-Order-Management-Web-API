@@ -275,4 +275,34 @@ def test_edit_order(db_session):
     assert articolo.quantità == 15
     assert ordine.total == 50
 
-    
+def test_delete_articolo_order_empty(db_session):
+    user_in = UserCreate(first_name="Mario", last_name="Rossi", email="mario.rossi@gmail.com")
+    user = create_user(db=db_session, new_user=user_in)
+
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+    ordine_in = OrderCreate(user_id = user.id, articoli=[{"articolo_id" : articolo.id, "quantità" : 10}])
+    ordine = create_order(db=db_session, ordine=ordine_in)
+
+
+    message = delete_order_articolo(order_id = ordine.id, articolo_id=articolo.id, db=db_session)
+
+    assert message == f"Articolo con id : {articolo.id} eliminato dall'ordine con id : {ordine.id}. Ordine con id {ordine.id} eliminato, nessun articolo presente nell'ordine"
+
+def test_delete_articolo_order_not_empty(db_session):
+    user_in = UserCreate(first_name="Mario", last_name="Rossi", email="mario.rossi@gmail.com")
+    user = create_user(db=db_session, new_user=user_in)
+
+    articolo_in = ArticoloCreate(name = "test", desc="test", prezzo = 10, quantità=20)
+    articolo = create_articolo(db= db_session, articolo = articolo_in)
+
+    articolo2_in = ArticoloCreate(name = "test2", desc="test", prezzo = 20, quantità=50)
+    articolo2 = create_articolo(db=db_session, articolo = articolo2_in)
+
+    ordine_in = OrderCreate(user_id = user.id, articoli=[{"articolo_id" : articolo.id, "quantità" : 10}, {"articolo_id" : articolo2.id, "quantità" : 10}])
+    ordine = create_order(db=db_session, ordine=ordine_in)
+
+    message = delete_order_articolo(order_id=ordine.id, articolo_id=articolo.id, db=db_session)
+
+    assert message == f"Articolo con id : {articolo.id} eliminato dall'ordine con id : {ordine.id}, totale ordine = {ordine.total}"
