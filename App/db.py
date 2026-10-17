@@ -1,10 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from App.config import settings
 
-
-Database_URL = "postgresql://postgres:1312@localhost:5432/Catalogo"
-
-engine = create_engine(Database_URL)
+engine = create_engine(settings.db_url)
 
 SessionLocal = sessionmaker(autoflush=False, autocommit=False, bind=engine)
 

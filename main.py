@@ -4,6 +4,7 @@ from App.db import get_db
 from App.schemas import *
 import App.crud as crud
 import uvicorn
+from App.config import settings
 
 app = FastAPI()
 
@@ -89,4 +90,4 @@ def delete_articolo_order(articolo_id:int, ordine_id:int, db:Session = Depends(g
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=5000)
+    uvicorn.run(app, port=settings.port)
