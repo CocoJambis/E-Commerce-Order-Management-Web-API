@@ -80,6 +80,13 @@ def delete_user(user_id:int, db:Session = Depends(get_db)):
 def delete_order(order_id:int, db:Session = Depends(get_db)):
     return crud.delete_order(order_id=order_id, db=db)
 
+#Elimina articolo in ordine
+@app.delete("/ordini/articolo{ordine_id}/{articolo_id}")
+def delete_articolo_order(articolo_id:int, ordine_id:int, db:Session = Depends(get_db)):
+    return crud.delete_order_articolo(order_id=ordine_id, 
+                                      articolo_id=articolo_id,
+                                      db=db)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, port=5000)

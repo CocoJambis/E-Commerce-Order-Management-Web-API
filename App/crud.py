@@ -231,3 +231,43 @@ def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session) -> object:
     db.commit()
     db.refresh(dettaglio)
     return dettaglio
+
+#Delete articolo in ordine
+def delete_order_articolo(order_id:int, articolo_id:int, db:Session) -> None:
+    
+    order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
+
+    if not order_exists:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Ordine con id : {order_id} trovato"
+        )
+
+    order_articolo = db.query(OrderArticolo).filter(OrderArticolo.articolo_id == articolo_id).one_or_none()
+
+    if not order_articolo:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Articolo con id : {articolo_id} non trovato nell'ordine"
+        )
+    
+    articolo = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
+
+    prezzo_articoli = order_articolo.articolo.prezzo * order_articolo.quantità_ordinata
+
+    order_exists.total -= prezzo_articoli
+
+    articolo.quantità += order_articolo.quantità_ordinata
+
+    if order_exists.total <= 0:
+        db.delete(order_exists)
+        db.commit()
+        return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}. Ordine con id {order_exists.id} eliminato, nessun articolo presente nell'ordine"
+
+    db.delete(order_articolo)
+    db.commit()
+    return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}, totale ordine = {order_exists.total}"
+    
+
+
+    
