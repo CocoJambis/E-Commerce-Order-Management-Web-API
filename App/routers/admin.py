@@ -8,29 +8,30 @@ from App.models import User
 
 router = APIRouter(
     prefix="/admin",
-    tags=["Admin"]
+    tags=["Admin"],
+    dependencies=[Depends(crud.get_current_admin_user)]
 )
 
 #---------------------ARTICOLI--------------------------
 
 #Crea articolo
 @router.post("", response_model=ArticoloResponse)
-def crea_articolo(articolo:ArticoloCreate, db:Session = Depends(get_db), current_admin: User = Depends(crud.get_current_admin_user)):
+def crea_articolo(articolo:ArticoloCreate, db:Session = Depends(get_db)):
     return crud.create_articolo(db=db, articolo=articolo)
 
 #Modifica prezzo articolo
 @router.put("/{articolo_id}", response_model=ArticoloResponse)
-def modifica_prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session = Depends(get_db), current_admin: User = Depends(crud.get_current_admin_user)):
+def modifica_prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session = Depends(get_db)):
     return crud.prezzo_articolo(nuovo_prezzo=nuovo_prezzo, articolo_id=articolo_id, db=db)
 
 #Aggiungi quantità articolo
 @router.put("/aggiungigiacenza/{articolo_id}", response_model=ArticoloResponse)
-def aggiungi_quantità(nuova_quantità:ModificaGiacenzaArticolo, articolo_id:int, db:Session = Depends(get_db), current_admin: User = Depends(crud.get_current_admin_user)):
+def aggiungi_quantità(nuova_quantità:ModificaGiacenzaArticolo, articolo_id:int, db:Session = Depends(get_db)):
     return crud.modifica_giacenza(articolo_id=articolo_id, nuova_giacenza=nuova_quantità, db=db)
 
 #Elimina articolo
 @router.delete("/{articolo_id}")
-def delete_articolo(articolo_id:int, db:Session = Depends(get_db), current_admin: User = Depends(crud.get_current_admin_user)):
+def delete_articolo(articolo_id:int, db:Session = Depends(get_db)):
     return crud.delete_articolo(articolo_id=articolo_id, db=db)
 
 
@@ -38,12 +39,12 @@ def delete_articolo(articolo_id:int, db:Session = Depends(get_db), current_admin
 
 #Lista tutti gli utenti
 @router.get("/users", response_model=list[UserResponse])
-def all_users(db:Session = Depends(get_db), current_admin:User = Depends(crud.get_current_admin_user)):
+def all_users(db:Session = Depends(get_db)):
     return crud.user_list(db=db)
 
 #Elimina utente
 @router.delete("/{user_id}")
-def delete_user(user_id:int, db:Session = Depends(get_db), current_admin:User = Depends(crud.get_current_admin_user)):
+def delete_user(user_id:int, db:Session = Depends(get_db)):
     return crud.delete_user(user_id=user_id, db=db)
 
 
@@ -51,15 +52,15 @@ def delete_user(user_id:int, db:Session = Depends(get_db), current_admin:User = 
 
 #Tutti gli ordini
 @router.get("", response_model=list[OrderResponse])
-def all_orders(db:Session = Depends(get_db), current_admin:User = Depends(crud.get_current_admin_user)):
+def all_orders(db:Session = Depends(get_db)):
     return crud.all_orders(db=db)
 
 #Lista articoli ordinati in un ordine
 @router.get("/articoliordinati/{order_id}", response_model=list[ArticoliOrdinati])
-def lista_articoli_ordinati(order_id:int, db:Session = Depends(get_db), current_admin:User = Depends(crud.get_current_admin_user)):
+def lista_articoli_ordinati(order_id:int, db:Session = Depends(get_db)):
     return crud.lista_articoli_ordinati_by_order_id(order_id=order_id, db=db)
 
 #Elimina ordine
 @router.delete("/orders/{order_id}")
-def delete_order(order_id:int, db:Session = Depends(get_db), current_admin:User = Depends(crud.get_current_admin_user)):
+def delete_order(order_id:int, db:Session = Depends(get_db)):
     return crud.delete_order_admin(order_id=order_id, db=db)
