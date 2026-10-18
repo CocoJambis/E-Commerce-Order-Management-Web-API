@@ -1,41 +1,39 @@
 # E-Commerce & Order Management Web API
 
-A powerful, production-ready RESTful API for an e-commerce platform built with **FastAPI**, **SQLAlchemy ORM**, and **Pydantic v2**. This microservice handles complex relational database structures, user authentications, and transactional business logic like inventory deduction during order placement.
+Una potente Web API RESTful pronta per la produzione per una piattaforma di e-commerce, sviluppata con **FastAPI**, **SQLAlchemy ORM** e **Pydantic v2**. 
+
+Il progetto applica i sani principi di ingegneria del software come la **Separation of Concerns (SoC)** e il **Data Transfer Object (DTO) pattern**, gestendo transazioni di database complesse, autenticazione sicura e controllo degli accessi.
+
+---
 
 ## 🚀 Key Features
 
-- **Relational Order Management System:** Features complex table associations mapping relational joints between Users, Items (Catalog), and Orders.
-- **Atomic Stock Transaction Logic:** Automatically verifies physical item availability in the warehouse before confirming an order, reducing quantities in real-time, and rolling back safely to ensure data consistency.
-- **Decoupled Request/Response Payloads:** Built following the Data Transfer Object (DTO) pattern using **Pydantic v2** schemas to encapsulate internal entity states and protect sensitive columns.
-- **Robust Endpoint Validation:** Leverages specialized field typings (`EmailStr`) and native web error formatting using `HTTPException` codes (e.g., `404 Not Found`, `400 Bad Request`).
-- **Interactive API Playgrounds:** Full runtime inspection and request execution directly through built-in **Swagger UI** (`/docs`) and **ReDoc** suites.
+*   **Autenticazione Sicura con JWT:** Sistema di login e registrazione basato su JSON Web Tokens (JWT) con hashing delle password in totale sicurezza.
+*   **Pannello Admin e RBAC:** Controllo degli accessi basato sui ruoli (**Role-Based Access Control**). Protezione avanzata delle rotte tramite la Dependency Injection di FastAPI per consentire le operazioni di gestione catalogo, utenti e ordini solo ad utenti con privilegi Admin.
+*   **Gestione Atomica dello Stock (Warehouse Logic):** Verifica automatica della disponibilità degli articoli nel magazzino durante il checkout. Riduzione delle quantità in tempo reale con gestione delle transazioni (commit/rollback) per garantire la coerenza dei dati ed evitare l'overbooking.
+*   **Separazione dei Payload (DTO Pattern):** Utilizzo rigoroso degli schemi di **Pydantic v2** per separare i dati di richiesta e risposta, nascondendo le colonne sensibili del database (come gli hash delle password).
+*   **Architettura Documentata:** Integrazione nativa con **Swagger UI** (`/docs`) e **ReDoc** (`/redoc`) per il test e l'ispezione immediata degli endpoint in runtime.
 
 ---
 
-## 🛠️ Architecture & Modularity
+## 🛠️ Architettura del Progetto
 
-The project architecture enforces clean code principles and a strict **Separation of Concerns (SoC)**:
+L'applicazione segue una struttura modulare e pulita per garantire scalabilità e manutenibilità del codice:
 
-- **`main.py` (Controller/API Layer):** Manages routing configurations, captures network payload states, and handles declarative web exceptions.
-- **`crud.py` (Persistence Layer):** Isolates the business logic and database operation workflows (queries, updates, stock manipulation).
-- **`models.py` (Entity & Schema Layer):** Maps object-relational schemas (inheriting from an abstract base class to share standard constraints) alongside Pydantic verification structures.
-- **`db.py` (Infrastructure Layer):** Handles connection engine lifecycles and provides managed transactions per HTTP request via Dependency Injection (`Depends(get_db)`).
-
-### Tech Stack
-* **Framework:** FastAPI 
-* **Validation:** Pydantic v2
-* **ORM Framework:** SQLAlchemy
-* **Database Engine:** SQLite / PostgreSQL Ready
+*   `main.py` (Controller/API Layer): Gestisce l'inizializzazione dell'app, la configurazione dei router, dei tag e la cattura delle eccezioni HTTP.
+*   `App/crud.py` (Persistence Layer): Isola la business logic e le query dirette al database (inserimenti, update, logica di magazzino, estrazione utenti correnti).
+*   `App/models.py` (Entity Layer): Mappa lo schema Object-Relational (ORM) tramite SQLAlchemy ereditando da una Base dichiarativa comune.
+*   `App/schemas.py` (Validation Layer): Contiene i modelli Pydantic v2 per la validazione rigorosa dei tipi di dato in ingresso e in uscita.
+*   `App/db.py` (Infrastructure Layer): Gestisce il ciclo di vita dell'engine del database e fornisce la sessione transazionale per ogni singola richiesta HTTP (`Depends(get_db)`).
 
 ---
 
-## 📋 Relational Database Schema Highlights
+## 💻 Tech Stack
 
-### 1. `users` (Account Registry)
-* Tracks user authentication mappings, credentials, and structural profile parameters.
+*   **Framework:** FastAPI
+*   **Data Validation:** Pydantic v2
+*   **ORM Framework:** SQLAlchemy
+*   **Database Migrations:** Alembic
+*   **Database Engine:** SQLite / PostgreSQL Ready
 
-### 2. `items` (Product Catalog)
-* Stores product inventory identifiers, base catalog names, prices, and available stocks.
-
-### 3. `orders` & `order_items` (Transactional Layers)
-* Implements multi-table relations linking user receipts with order tracking, computing quantities purchased, item variations, and transactional historical states.
+---
