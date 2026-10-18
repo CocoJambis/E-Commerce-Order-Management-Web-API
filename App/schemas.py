@@ -1,16 +1,20 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from typing import Optional
 
 #User Models
 class UserCreate(BaseModel):
     first_name:str = Field(min_length=3, max_length=20)
     last_name:str = Field(min_length=3, max_length=20)
     email:EmailStr
+    password:str
 
 class UserResponse(BaseModel):
     id:int
     first_name:str
     last_name:str
     email:EmailStr
+    is_active:bool
+    role:str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,7 +49,6 @@ class OrderArt(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    user_id:int
     articoli:list[OrderArt]
 
 
@@ -64,3 +67,17 @@ class ArticoliOrdinati(BaseModel):
     quantità_ordinata:int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserLogin(BaseModel):
+    email:str
+    password:str
+
+
+class Token(BaseModel):
+    access_token:str
+    token_type:str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+

@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from App.config import settings
-from App.routers import users, orders, articles
-
+from App.routers import users, orders, articles, admin
 
 app = FastAPI(
     title="E-Commerce Order Management API",
@@ -19,6 +18,7 @@ def home():
 app.include_router(users.router)
 app.include_router(articles.router)
 app.include_router(orders.router)
+app.include_router(admin.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, port=settings.port)

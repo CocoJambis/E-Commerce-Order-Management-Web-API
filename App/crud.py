@@ -1,18 +1,78 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 from App.models import *
 from App.schemas import *
+from App.auth import *
+from App.db import get_db
 
+
+#Get user token
+def get_current_user(token:str = Depends(oauth2_scheme), db:Session = Depends(get_db)) -> User:
+    token_data = verify_token(token)
+    user = db.query(User).filter(User.email == token_data.email).one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Utente {user.email} non esistente"
+        )
+    return user
+
+#Utente attivo
+def get_current_active_user(current_user : User = Depends(get_current_user)) -> User:
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=404,
+            detail=f"User inattivo"
+        )
+    return current_user
+
+#Admin
+def get_current_admin_user(current_user:User = Depends(get_current_active_user)) -> User:
+    if current_user.role != "Admin":
+        raise HTTPException(
+            status_code=404,
+            detail="Non hai i permessi per accedere a questa pagina"
+        )
+
+    return current_user
+
+#Login per Token
+def login_for_access_token(form_data:OAuth2PasswordRequestForm, db:Session) -> TokenData:
+    user = db.query(User).filter(User.email == form_data.username).one_or_none()
+
+    if not user or not verify_pwd(form_data.password, user.hashed_pwd):
+        raise HTTPException(
+            status_code=404,
+            detail="Username o password errati!"
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=404,
+            detail="User Inattivo"
+        )
+
+    access_token_expires = timedelta(minutes=settings.token_expires)
+    access_token = create_access_token(
+        data={"sub":user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type":"bearer"}
 
 #Crea Utente
-def create_user(db:Session, new_user:UserCreate) -> object:
+def create_user(db:Session, new_user:UserCreate) -> User:
 
     user_exists = db.query(User).filter(User.email == new_user.email).one_or_none()
 
     if user_exists:
         raise HTTPException(status_code=404, detail=f"{new_user.email} già esistente")
 
-    user = User(first_name = new_user.first_name, last_name = new_user.last_name, email = new_user.email)
+    hashed_password = get_pwd_hash(new_user.password)
+
+    user = User(first_name = new_user.first_name, 
+                last_name = new_user.last_name, 
+                email = new_user.email, 
+                hashed_pwd=hashed_password
+                )
 
     db.add(user)
     db.commit()
@@ -21,12 +81,12 @@ def create_user(db:Session, new_user:UserCreate) -> object:
 
 
 #Tutti gli utenti
-def user_list(db:Session) -> list[object]:
+def user_list(db:Session) -> list[User]:
     return db.query(User).all()
 
 
 #Crea Articolo
-def create_articolo(db:Session, articolo:ArticoloCreate) -> object:
+def create_articolo(db:Session, articolo:ArticoloCreate) -> Articolo:
 
     articolo_exists = db.query(Articolo).filter(Articolo.name == articolo.name).one_or_none()
 
@@ -42,14 +102,14 @@ def create_articolo(db:Session, articolo:ArticoloCreate) -> object:
 
 
 #Tutti gli articoli
-def all_articoli(db:Session) -> list[object]:
+def all_articoli(db:Session) -> list[Articolo]:
     return db.query(Articolo).all()
 
 
 #Crea Ordine
-def create_order(db:Session, ordine:OrderCreate) -> object:
+def create_order(db:Session, ordine:OrderCreate, current_user:User) -> Order:
 
-    user_exists = db.query(User).filter(User.id == ordine.user_id).one_or_none()
+    user_exists = db.query(User).filter(User.id == current_user.id).one_or_none()
 
     if not user_exists:
         raise HTTPException(status_code=404, detail="User inesistente!")
@@ -64,7 +124,7 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
     mappa_articoli_db = {art.id: art for art in articoli_selezionati}
 
     #Crea l'ordine
-    nuovo_ordine = Order(user_id = ordine.user_id)
+    nuovo_ordine = Order(user_id = current_user.id)
     db.add(nuovo_ordine)
     db.flush()
 
@@ -105,7 +165,7 @@ def create_order(db:Session, ordine:OrderCreate) -> object:
     
 
 #lista articoli ordinati in base all'id ordine
-def lista_articoli_ordinati_by_order_id(order_id:int, db:Session) -> list[object]:
+def lista_articoli_ordinati_by_order_id(order_id:int, db:Session) -> list[OrderArticolo]:
 
     order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
 
@@ -122,7 +182,7 @@ def all_orders(db:Session):
 
 
 #Elimina ordine
-def delete_order(order_id:int, db:Session) -> None:
+def delete_order_admin(order_id:int, db:Session) -> None:
     order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
 
     if not order_exists:
@@ -182,7 +242,7 @@ def modifica_giacenza(articolo_id:int, nuova_giacenza:ModificaGiacenzaArticolo, 
     return articolo_exists
 
 #Visualizza tutti gli ordini di un utente
-def get_user_orders(user_id:int, db:Session) -> list[object]:
+def get_user_orders(user_id:int, db:Session) -> list[Order]:
     user_exists = db.query(User).filter(User.id == user_id).one_or_none()
 
     if not user_exists:
@@ -192,7 +252,18 @@ def get_user_orders(user_id:int, db:Session) -> list[object]:
 
 
 #Modifica quantità articoli ordinati
-def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session) -> object:
+def edit_order(current_user:User, nuova_quantità:OrderArt, order_id:int, db:Session) -> OrderArticolo:
+
+    ordini_utente = current_user.orders
+
+    orders_ids = [ord.id for ord in ordini_utente]
+
+    if order_id not in orders_ids:
+        raise HTTPException(
+            status_code=404,
+            detail= f"Ordine con id {order_id} non trovato nei tuoi ordini"
+        )
+
     order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
 
     if not order_exists:
@@ -202,6 +273,13 @@ def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session) -> object:
     dettagli = order_exists.dettagli_articoli
     dettagli_mappa = {art.articolo_id: art for art in dettagli}
     dettaglio = dettagli_mappa.get(nuova_quantità.articolo_id)
+
+    if not dettaglio:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Articolo non esistente"
+            )
+    
     articolo = dettaglio.articolo
 
     if not articolo:
@@ -233,7 +311,14 @@ def edit_order(nuova_quantità:OrderArt, order_id:int, db:Session) -> object:
     return dettaglio
 
 #Delete articolo in ordine
-def delete_order_articolo(order_id:int, articolo_id:int, db:Session) -> None:
+def delete_order_articolo(current_user:User, order_id:int, articolo_id:int, db:Session) -> None:
+
+    if not check_users_orders(user=current_user, 
+                              order_id=order_id):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Ordine con id {order_id} non trovato nei tuoi ordini"
+        )
     
     order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
 
@@ -267,7 +352,41 @@ def delete_order_articolo(order_id:int, articolo_id:int, db:Session) -> None:
     db.delete(order_articolo)
     db.commit()
     return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}, totale ordine = {order_exists.total}"
-    
+
+def delete_order_user(current_user:User, order_id:int, db:Session):
+
+    current_user_orders = current_user.orders
+
+    if not current_user_orders:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Non hai nessun ordine."
+        )
+
+    if not check_users_orders(user=current_user,
+                              order_id=order_id):
+        raise HTTPException(
+            status_code=404,
+            detail=f"ID non presente nei tuoi ordini"
+        )
+
+    ordine = db.query(Order).filter(Order.id == order_id).one_or_none()
+
+    for dettaglio in ordine.dettagli_articoli:
+        dettaglio.articolo.quantità += dettaglio.quantità_ordinata
+
+    db.delete(ordine)
+    db.commit()
+    return f"Ordine con id {order_id} eliminato con successo"
 
 
+def check_users_orders(user:User, order_id:int):
+    ordini = user.orders
+
+    ordini_ids = [ord.id for ord in ordini]
+
+    if order_id not in ordini_ids:
+        return False
+    else:
+        return True
     

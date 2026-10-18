@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
-from sqlalchemy import String, Integer, Float, ForeignKey
+from sqlalchemy import String, Integer, Float, ForeignKey, Boolean
 
 Base = declarative_base()
 
@@ -23,6 +23,9 @@ class User(Base):
     first_name : Mapped[str] = mapped_column(String, nullable=False)
     last_name : Mapped[str] = mapped_column(String, nullable=False)
     email : Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    hashed_pwd : Mapped[str] = mapped_column(String, nullable=False)
+    is_active : Mapped[bool] = mapped_column(Boolean, default=True)
+    role : Mapped[str] = mapped_column(String, default="User", nullable=False)
 
     orders : Mapped[List["Order"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
