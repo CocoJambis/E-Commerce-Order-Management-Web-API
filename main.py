@@ -1,7 +1,10 @@
 from fastapi import FastAPI
+
 import uvicorn
+
 from App.config import settings
 from App.routers import users, orders, articles, admin
+
 
 app = FastAPI(
     title="E-Commerce Order Management API",
@@ -11,7 +14,7 @@ app = FastAPI(
 
 
 @app.get("/", tags=["Root"])
-def home():
+async def home():
     return {"message" : "Welcome to the E-Commerce API!"}
 
 #Routers

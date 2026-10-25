@@ -1,15 +1,39 @@
 from fastapi import HTTPException, Depends
-from sqlalchemy.orm import Session
-from App.models import *
-from App.schemas import *
-from App.auth import *
-from App.db import get_db
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy import select
+
+from App.models import User, Articolo, OrderArticolo, Order
+from App.config import settings
+
+from App.schemas import (TokenData,
+                         UserCreate,
+                         ArticoloCreate,
+                         OrderCreate,
+                         ModificaGiacenzaArticolo,
+                         ModificaPrezzoArticolo,
+                         OrderArt)
+
+from App.auth import (oauth2_scheme,
+                      OAuth2PasswordRequestForm,
+                      verify_pwd,
+                      verify_token,
+                      create_access_token,
+                      get_pwd_hash)
+
+from App.db import get_session
+
+from datetime import timedelta
 
 
 #Get user token
-def get_current_user(token:str = Depends(oauth2_scheme), db:Session = Depends(get_db)) -> User:
+async def get_current_user(token:str = Depends(oauth2_scheme), db:AsyncSession = Depends(get_session)) -> User:
+
     token_data = verify_token(token)
-    user = db.query(User).filter(User.email == token_data.email).one_or_none()
+    result = await db.execute(select(User).filter(User.email == token_data.email))
+    user = result.scalars().one_or_none()
+
     if not user:
         raise HTTPException(
             status_code=404, 
@@ -18,7 +42,7 @@ def get_current_user(token:str = Depends(oauth2_scheme), db:Session = Depends(ge
     return user
 
 #Utente attivo
-def get_current_active_user(current_user : User = Depends(get_current_user)) -> User:
+async def get_current_active_user(current_user : User = Depends(get_current_user)) -> User:
     if not current_user.is_active:
         raise HTTPException(
             status_code=404,
@@ -27,7 +51,7 @@ def get_current_active_user(current_user : User = Depends(get_current_user)) -> 
     return current_user
 
 #Admin
-def get_current_admin_user(current_user:User = Depends(get_current_active_user)) -> User:
+async def get_current_admin_user(current_user:User = Depends(get_current_active_user)) -> User:
     if current_user.role != "Admin":
         raise HTTPException(
             status_code=404,
@@ -37,8 +61,9 @@ def get_current_admin_user(current_user:User = Depends(get_current_active_user))
     return current_user
 
 #Login per Token
-def login_for_access_token(form_data:OAuth2PasswordRequestForm, db:Session) -> TokenData:
-    user = db.query(User).filter(User.email == form_data.username).one_or_none()
+async def login_for_access_token(form_data:OAuth2PasswordRequestForm, db:AsyncSession) -> TokenData:
+    result = await db.execute(select(User).filter(User.email == form_data.username))
+    user = result.scalars().one_or_none()
 
     if not user or not verify_pwd(form_data.password, user.hashed_pwd):
         raise HTTPException(
@@ -59,9 +84,10 @@ def login_for_access_token(form_data:OAuth2PasswordRequestForm, db:Session) -> T
     return {"access_token": access_token, "token_type":"bearer"}
 
 #Crea Utente
-def create_user(db:Session, new_user:UserCreate) -> User:
+async def create_user(db:AsyncSession, new_user:UserCreate) -> User:
 
-    user_exists = db.query(User).filter(User.email == new_user.email).one_or_none()
+    result = await db.execute(select(User).filter(User.email == new_user.email))
+    user_exists = result.scalars().one_or_none()
 
     if user_exists:
         raise HTTPException(status_code=404, detail=f"{new_user.email} già esistente")
@@ -75,41 +101,45 @@ def create_user(db:Session, new_user:UserCreate) -> User:
                 )
 
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 #Tutti gli utenti
-def user_list(db:Session) -> list[User]:
-    return db.query(User).all()
+async def user_list(db:AsyncSession) -> list[User]:
+    result = await db.execute(select(User))
+    return list(result.scalars().all())
 
 
 #Crea Articolo
-def create_articolo(db:Session, articolo:ArticoloCreate) -> Articolo:
+async def create_articolo(db:AsyncSession, articolo:ArticoloCreate) -> Articolo:
 
-    articolo_exists = db.query(Articolo).filter(Articolo.name == articolo.name).one_or_none()
+    result = await db.execute(select(Articolo).filter(Articolo.name == articolo.name))
+    articolo_exists = result.scalars().one_or_none()
 
     if articolo_exists:
         raise HTTPException(status_code=404, detail=f"{articolo.name} già esistente!")
 
-    articolo = Articolo(name = articolo.name, desc = articolo.desc, prezzo = articolo.prezzo, quantità = articolo.quantità)
+    nuovo_articolo = Articolo(name = articolo.name, desc = articolo.desc, prezzo = articolo.prezzo, quantità = articolo.quantità)
 
-    db.add(articolo)
-    db.commit()
-    db.refresh(articolo)
-    return articolo
+    db.add(nuovo_articolo)
+    await db.commit()
+    await db.refresh(nuovo_articolo)
+    return nuovo_articolo
 
 
 #Tutti gli articoli
-def all_articoli(db:Session) -> list[Articolo]:
-    return db.query(Articolo).all()
+async def all_articoli(db:AsyncSession) -> list[Articolo]:
+    result = await db.execute(select(Articolo))
+    return list(result.scalars().all())
 
 
 #Crea Ordine
-def create_order(db:Session, ordine:OrderCreate, current_user:User) -> Order:
+async def create_order(db:AsyncSession, ordine:OrderCreate, current_user:User) -> Order:
 
-    user_exists = db.query(User).filter(User.id == current_user.id).one_or_none()
+    result = await db.execute(select(User).filter(User.id == current_user.id))
+    user_exists = result.scalars().one_or_none()
 
     if not user_exists:
         raise HTTPException(status_code=404, detail="User inesistente!")
@@ -118,7 +148,8 @@ def create_order(db:Session, ordine:OrderCreate, current_user:User) -> Order:
     articoli_ids = [art.articolo_id for art in ordine.articoli]
 
     #Cerca gli articoli selezionati nel database
-    articoli_selezionati = db.query(Articolo).filter(Articolo.id.in_(articoli_ids)).all()
+    result_art = await db.execute(select(Articolo).filter(Articolo.id.in_(articoli_ids)))
+    articoli_selezionati = result_art.scalars().all()
 
     #Trasforma gli articoli selezionati in un dizionario, trova l'articolo facilente tramite l'id 
     mappa_articoli_db = {art.id: art for art in articoli_selezionati}
@@ -126,7 +157,7 @@ def create_order(db:Session, ordine:OrderCreate, current_user:User) -> Order:
     #Crea l'ordine
     nuovo_ordine = Order(user_id = current_user.id)
     db.add(nuovo_ordine)
-    db.flush()
+    await db.flush()
 
 
     totale_ordine : float = 0.0
@@ -159,112 +190,130 @@ def create_order(db:Session, ordine:OrderCreate, current_user:User) -> Order:
 
     nuovo_ordine.total = totale_ordine
 
-    db.commit()
-    db.refresh(nuovo_ordine)
+    await db.commit()
+    await db.refresh(nuovo_ordine)
     return nuovo_ordine
     
 
 #lista articoli ordinati in base all'id ordine
-def lista_articoli_ordinati_by_order_id(order_id:int, db:Session) -> list[OrderArticolo]:
+async def lista_articoli_ordinati_by_order_id(order_id:int, db:AsyncSession) -> list[OrderArticolo]:
 
-    order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
+    result_order = await db.execute(select(Order).filter(Order.id == order_id))
+    order_exists = result_order.scalars().one_or_none()
 
     if not order_exists:
         raise HTTPException(status_code=404, detail=f"Ordine con id : {order_id} inesistente!")
 
-    dettagli_ordine = db.query(OrderArticolo).filter(OrderArticolo.order_id == order_exists.id).all()
-
-    return dettagli_ordine
+    result_dettagli = await db.execute(select(OrderArticolo).filter(OrderArticolo.order_id == order_exists.id))
+    return list(result_dettagli.scalars().all())
 
 #lista ordini
-def all_orders(db:Session):
-    return db.query(Order).all()
+async def all_orders(db:AsyncSession):
+    result = await db.execute(select(Order))
+    return list(result.scalars().all())
 
 
 #Elimina ordine
-def delete_order_admin(order_id:int, db:Session) -> None:
-    order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
+async def delete_order_admin(order_id:int, db:AsyncSession) -> None:
+
+    result = await db.execute(select(Order).filter(Order.id == order_id))
+    order_exists = result.scalars().one_or_none()
 
     if not order_exists:
         raise HTTPException(status_code=404, detail=f"Ordine con id : {order_id} non trovato")
 
-    for dettaglio in order_exists.dettagli_articoli:
-        dettaglio.articolo.quantità += dettaglio.quantità_ordinata
+    result_dettagli = await db.execute(select(OrderArticolo).filter(OrderArticolo.order_id == order_id))
+    dettagli = result_dettagli.scalars().all()
 
-    db.delete(order_exists)
-    db.commit()
+    for dettaglio in dettagli:
+        res_art = await db.execute(select(Articolo).filter(Articolo.id == dettaglio.articolo_id))
+        art = res_art.scalars().one()
+        art.quantità += dettaglio.quantità_ordinata
 
-    return f"Ordine con id : {order_id} eliminato"
+    await db.delete(order_exists)
+    await db.commit()
    
 
 #Elimina articolo
-def delete_articolo(articolo_id:int,db:Session) -> None:
-    artiolo_exists = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
+async def delete_articolo(articolo_id:int,db:AsyncSession) -> str:
+    result = await db.execute(select(Articolo).filter(Articolo.id == articolo_id))
+    articolo_exists = result.scalars().one_or_none()
 
-    if not artiolo_exists:
+    if not articolo_exists:
         raise HTTPException(status_code=404, detail=f"Articolo con id : {articolo_id} non esistente nel database!")
 
-    db.delete(artiolo_exists)
-    db.commit()
+    await db.delete(articolo_exists)
+    await db.commit()
     return f"Articolo con id : {articolo_id} eliminato dal database!"
 
 #Elimina User
-def delete_user(user_id:int, db:Session) -> None:
-    user_exists = db.query(User).filter(User.id == user_id).one_or_none()
+async def delete_user(user_id:int, db:AsyncSession) -> str:
+    result = await db.execute(select(User).filter(User.id == user_id))
+    user_exists = result.scalars().one_or_none()
 
     if not user_exists:
         raise HTTPException(status_code=404, detail=f"User con id : {user_id} non esistente nel database!")
 
-    db.delete(user_exists)
-    db.commit()
+    await db.delete(user_exists)
+    await db.commit()
     return f"User con id : {user_id} eliminato dal database!"
 
 #Modifica prezzo articolo
-def prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:Session) -> None:
-    articolo_exists = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
+async def prezzo_articolo(nuovo_prezzo:ModificaPrezzoArticolo, articolo_id:int, db:AsyncSession) -> None:
+    result = await db.execute(select(Articolo).filter(Articolo.id == articolo_id))
+    articolo_exists = result.scalars().one_or_none()
 
     if not articolo_exists:
         raise HTTPException(status_code=404, detail=f"Articolo con id : {articolo_id} non trovato")
 
     articolo_exists.prezzo = nuovo_prezzo.prezzo
-    db.commit() 
+
+    await db.commit()
+    await db.refresh(articolo_exists)
     return articolo_exists
 
 #Aggiungi quantità disponibile
-def modifica_giacenza(articolo_id:int, nuova_giacenza:ModificaGiacenzaArticolo, db:Session) -> None:
-    articolo_exists = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
+async def modifica_giacenza(articolo_id:int, nuova_giacenza:ModificaGiacenzaArticolo, db:AsyncSession) -> Articolo:
+    result = await db.execute(select(Articolo).filter(Articolo.id == articolo_id))
+    articolo_exists = result.scalars().one_or_none()
 
     if not articolo_exists:
         raise HTTPException(status_code=404, detail=f"Articolo con id : {articolo_id} non trovato")
 
     articolo_exists.quantità += nuova_giacenza.quantità
-    db.commit()
+    await db.commit()
+    await db.refresh(articolo_exists)
     return articolo_exists
 
 #Visualizza tutti gli ordini di un utente
-def get_user_orders(user_id:int, db:Session) -> list[Order]:
-    user_exists = db.query(User).filter(User.id == user_id).one_or_none()
+async def get_user_orders(user_id:int, db:AsyncSession) -> list[Order]:
+    result_user = await db.execute(select(User).filter(User.id == user_id))
+    user_exists = result_user.scalars().one_or_none()
 
     if not user_exists:
         raise HTTPException(status_code=404, detail=f"User con id : {user_id} non trovato")
 
-    return user_exists.orders
+    result_orders = await db.execute(select(Order).filter(Order.user_id == user_id))
 
+    return list(result_orders.scalars().all())
 
 #Modifica quantità articoli ordinati
-def edit_order(current_user:User, nuova_quantità:OrderArt, order_id:int, db:Session) -> OrderArticolo:
+async def edit_order(current_user:User, nuova_quantità:OrderArt, order_id:int, db:AsyncSession) -> OrderArticolo:
 
-    ordini_utente = current_user.orders
+    if not await check_users_orders(user=current_user, 
+                                  order_id=order_id, db=db):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ordine con id {order_id} non trovato nei tuoi ordini"
+            )
 
-    orders_ids = [ord.id for ord in ordini_utente]
+    result = await db.execute(
+        select(Order)
+        .filter(Order.id == order_id)
+        .options(selectinload(Order.dettagli_articoli))
+    )
 
-    if order_id not in orders_ids:
-        raise HTTPException(
-            status_code=404,
-            detail= f"Ordine con id {order_id} non trovato nei tuoi ordini"
-        )
-
-    order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
+    order_exists = result.scalars().one_or_none()
 
     if not order_exists:
         raise HTTPException(status_code=404, detail=f"Ordine con id : {order_id} non trovato")
@@ -280,7 +329,8 @@ def edit_order(current_user:User, nuova_quantità:OrderArt, order_id:int, db:Ses
                 detail=f"Articolo non esistente"
             )
     
-    articolo = dettaglio.articolo
+    result_art = await db.execute(select(Articolo).filter(Articolo.id == nuova_quantità.articolo_id))
+    articolo = result_art.scalars().one_or_none()
 
     if not articolo:
         raise HTTPException(
@@ -288,39 +338,43 @@ def edit_order(current_user:User, nuova_quantità:OrderArt, order_id:int, db:Ses
             detail=f"Articolo con id : {nuova_quantità.articolo_id} non trovato nell'ordine"
         )
 
-    if articolo.quantità < nuova_quantità.quantità:
+    giacenza_reale_disponibile = articolo.quantità + dettaglio.quantità_ordinata
+
+    if giacenza_reale_disponibile < nuova_quantità.quantità:
         raise HTTPException(
             status_code=404,
-            detail=f"Quantità selezionata non disponibile in magazzino, giacenza : {dettaglio.articolo.quantità}"
+            detail=f"Quantità selezionata non disponibile in magazzino, giacenza totale disponibile: {giacenza_reale_disponibile}"
         )
 
-    #Toglie il costo della quantità dell'articolo precedente
-    prezzo_articolo = dettaglio.quantità_ordinata * articolo.prezzo
-    order_exists.total -= prezzo_articolo
+    # Sottrae il costo della quantità dell'articolo precedente dal totale
+    prezzo_articolo_precedente = dettaglio.quantità_ordinata * articolo.prezzo
+    order_exists.total -= prezzo_articolo_precedente
 
-    #Aggiorna giacenze
+    # Aggiorna giacenze magazzino ripristinando il vecchio e applicando il nuovo
     articolo.quantità += dettaglio.quantità_ordinata
     dettaglio.quantità_ordinata = nuova_quantità.quantità
     articolo.quantità -= nuova_quantità.quantità 
 
-    #Aggiunge il costo totale
+    # Ricalcola e aggiunge il costo totale aggiornato
     order_exists.total += articolo.prezzo * dettaglio.quantità_ordinata
     
-    db.commit()
-    db.refresh(dettaglio)
+    await db.commit()
+    await db.refresh(dettaglio)
     return dettaglio
 
 #Delete articolo in ordine
-def delete_order_articolo(current_user:User, order_id:int, articolo_id:int, db:Session) -> None:
+async def delete_order_articolo(current_user:User, order_id:int, articolo_id:int, db:AsyncSession) -> None:
 
-    if not check_users_orders(user=current_user, 
-                              order_id=order_id):
+    if not await check_users_orders(user=current_user, 
+                              order_id=order_id,
+                              db=db):
         raise HTTPException(
             status_code=404,
             detail=f"Ordine con id {order_id} non trovato nei tuoi ordini"
         )
     
-    order_exists = db.query(Order).filter(Order.id == order_id).one_or_none()
+    result_order = await db.execute(select(Order).filter(Order.id == order_id))
+    order_exists = result_order.scalars().one_or_none()
 
     if not order_exists:
         raise HTTPException(
@@ -328,7 +382,8 @@ def delete_order_articolo(current_user:User, order_id:int, articolo_id:int, db:S
             detail=f"Ordine con id : {order_id} trovato"
         )
 
-    order_articolo = db.query(OrderArticolo).filter(OrderArticolo.articolo_id == articolo_id).one_or_none()
+    result_detail = await db.execute(select(OrderArticolo.order_id == order_id, OrderArticolo.articolo_id == articolo_id))
+    order_articolo = result_detail.scalars().one_or_none()
 
     if not order_articolo:
         raise HTTPException(
@@ -336,57 +391,63 @@ def delete_order_articolo(current_user:User, order_id:int, articolo_id:int, db:S
             detail=f"Articolo con id : {articolo_id} non trovato nell'ordine"
         )
     
-    articolo = db.query(Articolo).filter(Articolo.id == articolo_id).one_or_none()
+    result_art = await db.execute(select(Articolo).filter(Articolo.id == articolo_id))
+    articolo = result_art.scalars().one_or_none()
 
-    prezzo_articoli = order_articolo.articolo.prezzo * order_articolo.quantità_ordinata
-
+    #Calcolo prezzo totale degli articoli rimossi usando l'oggetto articolo recuperato
+    prezzo_articoli = articolo.prezzo * order_articolo.quantità_ordinata
     order_exists.total -= prezzo_articoli
 
+    #Ripristina la merce nel magazzino
     articolo.quantità += order_articolo.quantità_ordinata
 
+    #Se l'ordine si sbuolta completamente o va sotto zero, lo cancelliamo del tutto
     if order_exists.total <= 0:
-        db.delete(order_exists)
-        db.commit()
+        await db.delete(order_exists)
+        await db.commit()
         return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}. Ordine con id {order_exists.id} eliminato, nessun articolo presente nell'ordine"
 
-    db.delete(order_articolo)
-    db.commit()
+    await db.delete(order_articolo)
+    await db.commit()
     return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}, totale ordine = {order_exists.total}"
 
-def delete_order_user(current_user:User, order_id:int, db:Session):
+#Elimina l'intero ordine lato utente
+async def delete_order_user(current_user:User, order_id:int, db:AsyncSession):
 
-    current_user_orders = current_user.orders
-
-    if not current_user_orders:
+    if not await check_users_orders(user=current_user,
+                                    order_id=order_id,
+                                    db=db):
         raise HTTPException(
             status_code=404,
-            detail=f"Non hai nessun ordine."
+            detail="ID non presente nei tuoi ordini o non hai nessun ordine attivo."
         )
 
-    if not check_users_orders(user=current_user,
-                              order_id=order_id):
+    result = await db.execute(
+        select(Order)
+        .filter(Order.id == order_id)
+        .options(selectinload(Order.dettagli_articoli))
+    )
+
+    ordine = result.scalars().one_or_none()
+
+    if not ordine:
         raise HTTPException(
             status_code=404,
-            detail=f"ID non presente nei tuoi ordini"
+            detail=f"Ordine non trovato"
         )
 
-    ordine = db.query(Order).filter(Order.id == order_id).one_or_none()
-
+    # Ripristino magazzino per ogni articolo presente nell'ordine
     for dettaglio in ordine.dettagli_articoli:
-        dettaglio.articolo.quantità += dettaglio.quantità_ordinata
+        result_art = await db.execute(select(Articolo).filter(Articolo.id == dettaglio.articolo_id))
+        art = result_art.scalars().one()
+        art.quantità += dettaglio.quantità_ordinata
 
-    db.delete(ordine)
-    db.commit()
+    await db.delete(ordine)
+    await db.commit()
     return f"Ordine con id {order_id} eliminato con successo"
 
 
-def check_users_orders(user:User, order_id:int):
-    ordini = user.orders
-
-    ordini_ids = [ord.id for ord in ordini]
-
-    if order_id not in ordini_ids:
-        return False
-    else:
-        return True
-    
+async def check_users_orders(user:User, order_id:int, db:AsyncSession):
+    result = await db.execute(select(Order).filter(Order.id == order_id, Order.user_id == user.id))
+    order = result.scalars().one_or_none()
+    return order is not None
