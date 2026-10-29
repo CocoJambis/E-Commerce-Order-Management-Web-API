@@ -20,7 +20,7 @@ router = APIRouter(
 #Registra Utente
 @router.post("", response_model=UserResponse)
 async def create_user(new_user:UserCreate, db:AsyncSession = Depends(get_session)):
-    return await crud.create_user(db=db, new_user=new_user)
+    return await crud.UserRepository.create_user(db=db, new_user=new_user)
 
 #Token
 @router.post("/token", response_model=Token)
@@ -30,7 +30,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 #Ordini Utente
 @router.get("/orders", response_model=list[OrderResponse])
 async def lista_orders_user(current_user:User = Depends(crud.get_current_active_user), db:AsyncSession = Depends(get_session)):
-    return await crud.get_user_orders(user_id=current_user.id, db=db)
+    return await crud.OrderRepository.get_user_orders(user_id=current_user.id, db=db)
 
 #Dettagli ordine
 @router.get("/orders/details", response_model=list[ArticoliOrdinati])

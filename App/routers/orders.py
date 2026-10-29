@@ -16,7 +16,7 @@ router = APIRouter(
 #Crea ordine
 @router.post("", response_model=OrderResponse)
 async def add_order(order:OrderCreate, db:AsyncSession = Depends(get_session), current_user:User = Depends(crud.get_current_active_user)):
-    return await crud.create_order(db=db, 
+    return await crud.OrderRepository.create_order(db=db, 
                              ordine=order, 
                              current_user=current_user)
 
@@ -27,7 +27,7 @@ async def modifica_quantità_articolo_ordinata(ordine_id:int, nuova_quantità:Or
                                               current_user:User = Depends(crud.get_current_active_user)):
     
     
-    return await crud.edit_order(current_user=current_user, 
+    return await crud.OrderRepository.edit_order(current_user=current_user, 
                            nuova_quantità=nuova_quantità, 
                            order_id=ordine_id, 
                            db=db)
@@ -39,7 +39,7 @@ async def delete_articolo_order(ordine_id:int, articolo_id:int,
                                 current_user:User = Depends(crud.get_current_active_user)):
 
     
-    return await crud.delete_order_articolo(current_user=current_user,
+    return await crud.OrderRepository.delete_order_articolo(current_user=current_user,
                                       order_id=ordine_id, 
                                       articolo_id=articolo_id, 
                                       db=db)
@@ -47,6 +47,6 @@ async def delete_articolo_order(ordine_id:int, articolo_id:int,
 #Rimuovi ordine
 @router.delete("/delete/{ordine_id}")
 async def delete_order(ordine_id:int, db:AsyncSession = Depends(get_session), current_user:User = Depends(crud.get_current_active_user)):
-    return await crud.delete_order_user(current_user=current_user, 
+    return await crud.OrderRepository.delete_order_user(current_user=current_user, 
                                   order_id=ordine_id, 
                                   db=db)
