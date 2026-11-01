@@ -33,14 +33,6 @@ async def lista_orders_user(current_user:User = Depends(crud.get_current_active_
     return await crud.OrderRepository.get_user_orders(user_id=current_user.id, db=db)
 
 #Dettagli ordine
-@router.get("/orders/details", response_model=list[ArticoliOrdinati])
-async def dettagli_ordine(current_user:User = Depends(crud.get_current_active_user), db:AsyncSession = Depends(get_session)):
-
-    ordini_utente = current_user.orders
-
-    if not ordini_utente:
-        return []
-
-    dettagli = [dettaglio for ord in ordini_utente for dettaglio in ord.dettagli_articoli]
-
-    return dettagli
+@router.get("/orders/details/{order_id}", response_model=list[ArticoliOrdinati])
+async def dettagli_ordine(order_id:int, current_user:User = Depends(crud.get_current_active_user), db:AsyncSession = Depends(get_session)):
+    return await crud.OrderRepository.dettagli_ordine(current_user=current_user, order_id=order_id, db=db)

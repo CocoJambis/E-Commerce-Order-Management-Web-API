@@ -477,7 +477,25 @@ class OrderRepository():
         await db.commit()
         return f"Ordine con id {order_id} eliminato con successo"
 
+    @staticmethod
+    async def dettagli_ordine(current_user:User, order_id:int, db:AsyncSession):
 
+        result_order = await db.execute(
+            select(Order)
+            .filter(Order.id == order_id)
+            .options(selectinload(Order.dettagli_articoli)))
+
+        order_exists = result_order.scalar_one_or_none()
+
+        if not await check_users_orders(user=current_user, order_id=order_id, db=db):
+            raise HTTPException(
+                status_code=404,
+                detail="ID non presente nei tuoi ordini o non hai nessun ordine attivo."
+            )
+
+        dettagli = order_exists.dettagli_articoli
+
+        return list(dettagli)
 
 
 
