@@ -1,0 +1,5 @@
+__pycache__/
+.venv/
+Tests/
+.pytest_cache/
+README.md
