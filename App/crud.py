@@ -293,6 +293,7 @@ class ArticoloRepository():
         if not await check_users_orders(user=current_user, 
                                 order_id=order_id,
                                 db=db):
+            
             raise HTTPException(
                 status_code=404,
                 detail=f"Ordine con id {order_id} non trovato nei tuoi ordini"
@@ -307,8 +308,8 @@ class ArticoloRepository():
                 detail=f"Ordine con id : {order_id} trovato"
             )
 
-        result_detail = await db.execute(select(OrderArticolo.order_id == order_id, OrderArticolo.articolo_id == articolo_id))
-        order_articolo = result_detail.scalars().one_or_none()
+        result_detail = await db.execute(select(OrderArticolo).where(OrderArticolo.order_id == order_id, OrderArticolo.articolo_id == articolo_id))
+        order_articolo = result_detail.scalar_one_or_none()
 
         if not order_articolo:
             raise HTTPException(
@@ -317,7 +318,7 @@ class ArticoloRepository():
             )
         
         result_art = await db.execute(select(Articolo).filter(Articolo.id == articolo_id))
-        articolo = result_art.scalars().one_or_none()
+        articolo = result_art.scalar_one_or_none()
 
         #Calcolo prezzo totale degli articoli rimossi usando l'oggetto articolo recuperato
         prezzo_articoli = articolo.prezzo * order_articolo.quantità_ordinata
@@ -326,7 +327,7 @@ class ArticoloRepository():
         #Ripristina la merce nel magazzino
         articolo.quantità += order_articolo.quantità_ordinata
 
-        #Se l'ordine si sbuolta completamente o va sotto zero, lo cancelliamo del tutto
+        #Se l'ordine si svuota completamente o va sotto zero, lo cancelliamo del tutto
         if order_exists.total <= 0:
             await db.delete(order_exists)
             await db.commit()
@@ -402,13 +403,13 @@ class OrderRepository():
 
     #lista ordini
     @staticmethod
-    async def all_orders(db:AsyncSession):
+    async def all_orders(db:AsyncSession) -> list[Order]:
         result = await db.execute(select(Order))
         return list(result.scalars().all())
 
     #Elimina ordine
     @staticmethod
-    async def delete_order_admin(order_id:int, db:AsyncSession) -> None:
+    async def delete_order_admin(order_id:int, db:AsyncSession) -> str:
 
         result = await db.execute(select(Order).filter(Order.id == order_id))
         order_exists = result.scalars().one_or_none()
@@ -426,6 +427,7 @@ class OrderRepository():
 
         await db.delete(order_exists)
         await db.commit()
+        return f"Ordine con id {order_id} eliminato!"
 
 
     #Visualizza tutti gli ordini di un utente
@@ -443,7 +445,7 @@ class OrderRepository():
 
     #Elimina l'intero ordine lato utente
     @staticmethod
-    async def delete_order_user(current_user:User, order_id:int, db:AsyncSession):
+    async def delete_order_user(current_user:User, order_id:int, db:AsyncSession) -> str:
 
         if not await check_users_orders(user=current_user,
                                         order_id=order_id,
@@ -482,7 +484,7 @@ class OrderRepository():
 
         result_order = await db.execute(
             select(Order)
-            .filter(Order.id == order_id)
+            .where(Order.id == order_id)
             .options(selectinload(Order.dettagli_articoli)))
 
         order_exists = result_order.scalar_one_or_none()

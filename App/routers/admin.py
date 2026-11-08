@@ -19,7 +19,7 @@ router = APIRouter(
 #---------------------ARTICOLI--------------------------
 
 #Crea articolo
-@router.post("", response_model=ArticoloResponse)
+@router.post("/articolo", response_model=ArticoloResponse)
 async def crea_articolo(articolo:ArticoloCreate, db:AsyncSession = Depends(get_session)):
     return await crud.ArticoloRepository.create_articolo(db=db, articolo=articolo)
 
@@ -55,7 +55,7 @@ async def delete_user(user_id:int, db:AsyncSession = Depends(get_session)):
 #---------------------ORDERS--------------------------
 
 #Tutti gli ordini
-@router.get("", response_model=list[OrderResponse])
+@router.get("/orders", response_model=list[OrderResponse])
 async def all_orders(db:AsyncSession = Depends(get_session)):
     return await crud.OrderRepository.all_orders(db=db)
 
