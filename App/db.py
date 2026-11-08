@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from App.config import settings
 import os
 
-DB_URL = os.getenv(settings.db_url, "postgresql+asyncpg://utente_docker:password_docker_sicura@db:5432/database_docker")
+DB_URL = settings.db_url or "postgresql+asyncpg://utente_locale:password_locale@localhost:5432/database_locale"
 
 engine = create_async_engine(DB_URL)
 

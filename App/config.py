@@ -8,13 +8,13 @@ class Settings(BaseSettings):
     )
 
     #DB
-    db_url:str
+    db_url: str
     #Server 
-    port:int
+    port: int
     #App
-    version:str
-    secret_key:str
-    algorithm:str
-    token_expires:int
+    version: str
+    secret_key: str
+    algorithm: str
+    token_expires: int
 
 settings = Settings()
