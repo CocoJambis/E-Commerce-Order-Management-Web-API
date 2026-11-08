@@ -5,7 +5,7 @@ from main import app
 
 from App.db import get_session
 from App.models import Base, User, Articolo, Order
-from App.schemas import (
+from App.models import (
     UserCreate,
     ArticoloCreate,
     OrderCreate,
@@ -17,7 +17,6 @@ from App.crud import (
     ArticoloRepository,
     OrderRepository
 )
-
 
 
 DB_TEST = "sqlite+aiosqlite:///:memory:"

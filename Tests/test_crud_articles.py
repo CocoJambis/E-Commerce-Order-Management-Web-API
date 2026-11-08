@@ -4,7 +4,7 @@ from App.crud import (
     ArticoloRepository
     )
 
-from App.schemas import (
+from App.models import (
     ModificaPrezzoArticolo,
     ModificaGiacenzaArticolo,
     OrderArt

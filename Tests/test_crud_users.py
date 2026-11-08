@@ -2,7 +2,7 @@ from App.crud import(
     UserRepository,
 )
 
-from App.schemas import (UserCreate)
+from App.models import (UserCreate)
 import pytest
 from fastapi import HTTPException
 

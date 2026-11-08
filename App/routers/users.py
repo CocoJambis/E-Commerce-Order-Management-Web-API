@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from App.db import get_session
 
-from App.schemas import (UserResponse,
+from App.models import (UserResponse,
                          UserCreate,
                          Token,
                          OrderResponse,
                          ArticoliOrdinati)
 
-import App.crud as crud
+from App.crud import crud
 from App.auth import OAuth2PasswordRequestForm
 from App.models import User
 

@@ -6,7 +6,7 @@ from App.crud import (
     OrderRepository
 )
 
-from App.schemas import (
+from App.models import (
     UserCreate,
     ArticoloCreate,
     OrderCreate,

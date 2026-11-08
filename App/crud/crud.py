@@ -7,7 +7,7 @@ from sqlalchemy import select
 from App.models import User, Articolo, OrderArticolo, Order
 from App.config import settings
 
-from App.schemas import (TokenData,
+from App.models import ( TokenData,
                          UserCreate,
                          ArticoloCreate,
                          OrderCreate,

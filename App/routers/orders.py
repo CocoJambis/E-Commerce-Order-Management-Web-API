@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from App.schemas import (OrderResponse,
+from App.models import ( OrderResponse,
                          OrderCreate,
                          OrderArt,
                          ArticoliOrdinati)
 from App.db import get_session
-import App.crud as crud
+from App.crud import crud
 from App.models import User
 
 router = APIRouter(

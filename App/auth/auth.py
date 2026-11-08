@@ -4,7 +4,7 @@ import jwt
 from datetime import datetime, timedelta, UTC
 from App.config import settings
 from typing import Optional
-from App.schemas import TokenData
+from App.models import TokenData
 from fastapi import HTTPException
 
 pwd_context = PasswordHash.recommended()

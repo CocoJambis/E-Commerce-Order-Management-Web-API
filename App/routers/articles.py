@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from App.db import get_session
-from App.schemas import ArticoloResponse
-import App.crud as crud
+from App.models import ArticoloResponse
+from App.crud import crud
 
 router = APIRouter(
     prefix="/articoli",
