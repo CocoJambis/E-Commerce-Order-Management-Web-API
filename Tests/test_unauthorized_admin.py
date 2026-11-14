@@ -4,12 +4,7 @@ import pytest
 @pytest.mark.anyio
 async def test_create_product_unauthorized(client):
 
-    payload = {
-        "name" : "test",
-        "desc" : "test",
-        "prezzo" : 20,
-        "quantità" : 20
-    }
+    payload = {"name": "test", "desc": "test", "prezzo": 20, "quantità": 20}
 
     response = await client.post("/admin/articolo", json=payload)
 
@@ -19,20 +14,17 @@ async def test_create_product_unauthorized(client):
 @pytest.mark.anyio
 async def test_modifica_prezzo_articolo(client):
 
-    payload = {
-        "prezzo" : 20
-    }
+    payload = {"prezzo": 20}
 
     response = await client.put("/admin/1", json=payload)
 
     assert response.status_code == 401
 
+
 @pytest.mark.anyio
 async def test_aggiungi_giacenza_articolo(client):
 
-    payload = {
-        "quantità" : 20
-    }
+    payload = {"quantità": 20}
 
     response = await client.put("/admin/aggiungigiacenza/1", json=payload)
 
@@ -53,6 +45,7 @@ async def test_get_all_users(client):
     response = await client.get("/admin/users")
 
     assert response.status_code == 401
+
 
 @pytest.mark.anyio
 async def test_elimina_utente(client):

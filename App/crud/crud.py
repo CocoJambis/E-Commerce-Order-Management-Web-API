@@ -55,6 +55,18 @@ async def get_current_active_user(
     return current_user
 
 
+# Seller
+async def get_current_seller_user(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    if current_user.role not in ["Seller", "Admin"]:
+        raise HTTPException(
+            status_code=401, detail="Non hai i permessi per accedere a questa pagina"
+        )
+
+    return current_user
+
+
 # Admin
 async def get_current_admin_user(
     current_user: User = Depends(get_current_active_user),
@@ -122,6 +134,32 @@ class UserRepository:
         await db.refresh(user)
         return user
 
+    # Crea Utente Seller
+    @staticmethod
+    async def create_seller(db: AsyncSession, new_user: UserCreate) -> User:
+        result = await db.execute(select(User).filter(User.email == new_user.email))
+        user_exists = result.scalars().one_or_none()
+
+        if user_exists:
+            raise HTTPException(
+                status_code=404, detail=f"{new_user.email} già esistente"
+            )
+
+        hashed_password = get_pwd_hash(new_user.password)
+
+        user = User(
+            first_name=new_user.first_name,
+            last_name=new_user.last_name,
+            email=new_user.email,
+            hashed_pwd=hashed_password,
+            role="Seller",
+        )
+
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        return user
+
     # Tutti gli utenti
     @staticmethod
     async def user_list(db: AsyncSession) -> list[User]:
@@ -148,7 +186,9 @@ class UserRepository:
 class ArticoloRepository:
     # Crea Articolo
     @staticmethod
-    async def create_articolo(db: AsyncSession, articolo: ArticoloCreate) -> Articolo:
+    async def create_articolo(
+        current_user: User, db: AsyncSession, articolo: ArticoloCreate
+    ) -> Articolo:
 
         result = await db.execute(
             select(Articolo).filter(Articolo.name == articolo.name)
@@ -160,17 +200,39 @@ class ArticoloRepository:
                 status_code=404, detail=f"{articolo.name} già esistente!"
             )
 
+        if articolo.quantità <= 0:
+            raise HTTPException(
+                status_code=404, detail=f"Quantità : {articolo.quantità} non valida"
+            )
+
+        if articolo.prezzo <= 0:
+            raise HTTPException(
+                status_code=404, detail=f"Prezzo: {articolo.prezzo} non valido"
+            )
+
         nuovo_articolo = Articolo(
             name=articolo.name,
             desc=articolo.desc,
             prezzo=articolo.prezzo,
             quantità=articolo.quantità,
+            seller_id=current_user.id,
         )
 
         db.add(nuovo_articolo)
         await db.commit()
         await db.refresh(nuovo_articolo)
         return nuovo_articolo
+
+    # Lista articoli in vendita
+    @staticmethod
+    async def get_articles_selled(current_user: User, db: AsyncSession):
+
+        result = await db.execute(
+            select(Articolo).where(Articolo.seller_id == current_user.id)
+        )
+        articoli = result.scalars().all()
+
+        return articoli
 
     # Tutti gli articoli
     @staticmethod

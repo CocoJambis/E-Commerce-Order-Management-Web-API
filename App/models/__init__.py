@@ -1,10 +1,4 @@
-from .models import (
-        Base, 
-        Articolo, 
-        Order, 
-        OrderArticolo, 
-        User
-    )
+from .models import Base, Articolo, Order, OrderArticolo, User
 
 from .schemas import (
     UserCreate,
@@ -19,5 +13,5 @@ from .schemas import (
     ArticoliOrdinati,
     UserLogin,
     Token,
-    TokenData
+    TokenData,
 )

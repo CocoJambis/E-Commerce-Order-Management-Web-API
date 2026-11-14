@@ -9,6 +9,7 @@ from App.models import (
     UserResponse,
     OrderResponse,
     ArticoliOrdinati,
+    User,
 )
 from App.crud import (
     get_current_admin_user,
@@ -27,9 +28,13 @@ router = APIRouter(
 # Crea articolo
 @router.post("/articolo", response_model=ArticoloResponse)
 async def crea_articolo(
-    articolo: ArticoloCreate, db: AsyncSession = Depends(get_session)
+    articolo: ArticoloCreate,
+    current_user: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_session),
 ):
-    return await ArticoloRepository.create_articolo(db=db, articolo=articolo)
+    return await ArticoloRepository.create_articolo(
+        current_user=current_user, db=db, articolo=articolo
+    )
 
 
 # Modifica prezzo articolo

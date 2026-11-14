@@ -5,5 +5,5 @@ from .auth import (
     create_access_token,
     OAuth2PasswordRequestForm,
     pwd_context,
-    oauth2_scheme
+    oauth2_scheme,
 )

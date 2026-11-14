@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from App.models import OrderResponse, OrderCreate, OrderArt, ArticoliOrdinati
 from App.db import get_session
-from App.crud import OrderRepository, get_current_active_user
+from App.crud import OrderRepository, get_current_active_user, ArticoloRepository
 from App.models import User
 
 router = APIRouter(prefix="/ordini", tags=["Ordini"])
@@ -21,7 +21,7 @@ async def add_order(
 
 
 # Modifica quantità articolo ordinata
-@router.put("ordinearticolo/{ordine_id}", response_model=ArticoliOrdinati)
+@router.put("/ordinearticolo/{ordine_id}", response_model=ArticoliOrdinati)
 async def modifica_quantità_articolo_ordinata(
     ordine_id: int,
     nuova_quantità: OrderArt,
@@ -29,7 +29,7 @@ async def modifica_quantità_articolo_ordinata(
     current_user: User = Depends(get_current_active_user),
 ):
 
-    return await OrderRepository.edit_order(
+    return await ArticoloRepository.edit_order(
         current_user=current_user,
         nuova_quantità=nuova_quantità,
         order_id=ordine_id,
@@ -46,7 +46,7 @@ async def delete_articolo_order(
     current_user: User = Depends(get_current_active_user),
 ):
 
-    return await OrderRepository.delete_order_articolo(
+    return await ArticoloRepository.delete_order_articolo(
         current_user=current_user, order_id=ordine_id, articolo_id=articolo_id, db=db
     )
 

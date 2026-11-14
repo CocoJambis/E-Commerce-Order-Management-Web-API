@@ -35,6 +35,10 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
 
+    articoli_venduti: Mapped[List["Articolo"]] = relationship(
+        back_populates="seller", cascade="all, delete-orphan"
+    )
+
 
 class Articolo(Base):
     __tablename__ = "articoli"
@@ -44,6 +48,10 @@ class Articolo(Base):
     desc: Mapped[str] = mapped_column(String, nullable=False)
     prezzo: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     quantità: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    seller_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    seller: Mapped["User"] = relationship(back_populates="articoli_venduti")
 
 
 class Order(Base):

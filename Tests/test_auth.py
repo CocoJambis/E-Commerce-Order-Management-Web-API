@@ -5,14 +5,13 @@ import pytest
 async def test_register_user_success(client):
 
     payload = {
-        "first_name" : "mario",
-        "last_name" : "rossi",
-        "email" : "mario.rossi@gmail.com",
-        "password" : "123"
+        "first_name": "mario",
+        "last_name": "rossi",
+        "email": "mario.rossi@gmail.com",
+        "password": "123",
     }
 
     response = await client.post("/users/register", json=payload)
-
 
     assert response.status_code == 200
 
@@ -28,18 +27,15 @@ async def test_register_user_success(client):
 async def test_login_success(client):
 
     payload = {
-        "first_name" : "mario",
-        "last_name" : "rossi",
-        "email" : "mario.rossi@gmail.com",
-        "password" : "123"
+        "first_name": "mario",
+        "last_name": "rossi",
+        "email": "mario.rossi@gmail.com",
+        "password": "123",
     }
 
     await client.post("/users/register", json=payload)
 
-    login_payload = {
-        "username" : "mario.rossi@gmail.com",
-        "password" : "123"
-    }
+    login_payload = {"username": "mario.rossi@gmail.com", "password": "123"}
 
     response = await client.post("/users/token", data=login_payload)
 
@@ -53,18 +49,15 @@ async def test_login_success(client):
 async def test_login_wrong_password(client):
 
     payload = {
-        "first_name" : "mario",
-        "last_name" : "rossi",
-        "email" : "mario.rossi@gmail.com",
-        "password" : "123"
+        "first_name": "mario",
+        "last_name": "rossi",
+        "email": "mario.rossi@gmail.com",
+        "password": "123",
     }
 
     await client.post("/users/register", json=payload)
 
-    login_payload = {
-        "username" : "mario.rossi@gmail.com",
-        "password" : "2123"
-    }
+    login_payload = {"username": "mario.rossi@gmail.com", "password": "2123"}
 
     response = await client.post("/users/token", data=login_payload)
 
@@ -76,28 +69,21 @@ async def test_login_wrong_password(client):
 async def test_token_access(client):
 
     register_payload = {
-        "first_name" : "mario",
-        "last_name" : "rossi",
-        "email" : "mario.rossi@gmail.com",
-        "password" : "123"
-}
+        "first_name": "mario",
+        "last_name": "rossi",
+        "email": "mario.rossi@gmail.com",
+        "password": "123",
+    }
 
     await client.post("/users/register", json=register_payload)
 
-    login_payload = {
-        "username" : "mario.rossi@gmail.com",
-        "password" : "123"
-    }
+    login_payload = {"username": "mario.rossi@gmail.com", "password": "123"}
 
     response = await client.post("/users/token", data=login_payload)
     token = response.json()["access_token"]
-
 
     headers = {"Authorization": f"Bearer {token}"}
 
     response = await client.get("/users/orders", headers=headers)
 
     assert response.status_code == 200
-
-
-

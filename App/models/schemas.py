@@ -35,6 +35,7 @@ class ArticoloResponse(BaseModel):
     desc: str
     prezzo: float
     quantità: int
+    seller_id: int
 
     model_config = ConfigDict(from_attributes=True)
 

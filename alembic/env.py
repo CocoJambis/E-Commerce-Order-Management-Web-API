@@ -1,7 +1,7 @@
 import asyncio
 from logging.config import fileConfig
 from App.config import settings
-from sqlalchemy.ext.asyncio import async_engine_from_config  
+from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 from App.models import User, Articolo, Order, Base
 from alembic import context
@@ -50,9 +50,7 @@ def run_migrations_offline() -> None:
 def do_run_migrations(connection):
     """Funzione helper sincrona per eseguire le migrazioni nel contesto corretto."""
     context.configure(
-        connection=connection, 
-        target_metadata=target_metadata,
-        compare_type=True
+        connection=connection, target_metadata=target_metadata, compare_type=True
     )
 
     with context.begin_transaction():
