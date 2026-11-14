@@ -1,83 +1,88 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional
 
-#User Models
+
+# User Models
 class UserCreate(BaseModel):
-    first_name:str = Field(min_length=3, max_length=20)
-    last_name:str = Field(min_length=3, max_length=20)
-    email:EmailStr
-    password:str
+    first_name: str = Field(min_length=3, max_length=20)
+    last_name: str = Field(min_length=3, max_length=20)
+    email: EmailStr
+    password: str
+
 
 class UserResponse(BaseModel):
-    id:int
-    first_name:str
-    last_name:str
-    email:EmailStr
-    is_active:bool
-    role:str
+    id: int
+    first_name: str
+    last_name: str
+    email: EmailStr
+    is_active: bool
+    role: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
-#Articolo Models
+# Articolo Models
 class ArticoloCreate(BaseModel):
-    name:str
-    desc:str
-    prezzo:float
-    quantità:int
+    name: str
+    desc: str
+    prezzo: float
+    quantità: int
+
 
 class ArticoloResponse(BaseModel):
-    id:int
-    name:str
-    desc:str
-    prezzo:float
-    quantità:int
+    id: int
+    name: str
+    desc: str
+    prezzo: float
+    quantità: int
 
-    model_config = ConfigDict(from_attributes= True)
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ModificaPrezzoArticolo(BaseModel):
-    prezzo:float
+    prezzo: float
+
 
 class ModificaGiacenzaArticolo(BaseModel):
-    quantità:int
+    quantità: int
 
 
-#Order Models
+# Order Models
 class OrderArt(BaseModel):
-    articolo_id:int
-    quantità:int
+    articolo_id: int
+    quantità: int
 
 
 class OrderCreate(BaseModel):
-    articoli:list[OrderArt]
+    articoli: list[OrderArt]
 
 
 class OrderResponse(BaseModel):
-    id:int
-    user_id:int
-    total:float
+    id: int
+    user_id: int
+    total: float
 
     model_config = ConfigDict(from_attributes=True)
 
 
-#OrderArticolo models
+# OrderArticolo models
 class ArticoliOrdinati(BaseModel):
-    order_id:int
-    articolo_id:int
-    quantità_ordinata:int
+    order_id: int
+    articolo_id: int
+    quantità_ordinata: int
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserLogin(BaseModel):
-    email:str
-    password:str
+    email: str
+    password: str
 
 
 class Token(BaseModel):
-    access_token:str
-    token_type:str
+    access_token: str
+    token_type: str
+
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-
