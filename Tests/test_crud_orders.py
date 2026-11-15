@@ -3,7 +3,7 @@ import pytest
 from App.crud import UserRepository, ArticoloRepository, OrderRepository
 
 from App.models import UserCreate, ArticoloCreate, OrderCreate, OrderArt
-
+from Tests.conftest import Payloads
 
 from fastapi import HTTPException
 from Tests.conftest import CreateOrderSetup
@@ -56,7 +56,9 @@ async def test_create_order_giacenza_articolo_non_disponibile(db_session):
 
     user = await UserRepository.create_user(db=db_session, new_user=new_user)
 
-    new_articolo = ArticoloCreate(name="Test", desc="Test", prezzo=20, quantità=20)
+    new_articolo = ArticoloCreate(
+        name="Test", desc="Test", prezzo=10, quantità=20, category="casa"
+    )
 
     await ArticoloRepository.create_articolo(
         current_user=seller, db=db_session, articolo=new_articolo

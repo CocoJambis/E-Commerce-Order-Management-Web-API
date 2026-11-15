@@ -27,9 +27,7 @@ async def test_dettagli_ordine(client, user_token, db_session):
     )
     user = rs.scalar_one_or_none()
 
-    await CreateOrderSetup.create_order(
-        db=db_session, user=user, articolo=articolo
-    )
+    await CreateOrderSetup.create_order(db=db_session, user=user, articolo=articolo)
 
     token = user_token
 

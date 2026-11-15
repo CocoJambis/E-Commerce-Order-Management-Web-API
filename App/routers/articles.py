@@ -11,3 +11,9 @@ router = APIRouter(prefix="/articoli", tags=["Articoli"])
 @router.get("", response_model=list[ArticoloResponse])
 async def lista_articoli(db: AsyncSession = Depends(get_session)):
     return await ArticoloRepository.all_articoli(db)
+
+
+# Cerca articoli by categoria
+@router.get("/search", response_model=list[ArticoloResponse])
+async def find_articolo(category: str = None, db: AsyncSession = Depends(get_session)):
+    return await ArticoloRepository.find_article(db=db, category=category)

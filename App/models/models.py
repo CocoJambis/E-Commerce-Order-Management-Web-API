@@ -1,8 +1,16 @@
+import enum
 from typing import List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
-from sqlalchemy import String, Integer, Float, ForeignKey, Boolean
+from sqlalchemy import String, Integer, Float, ForeignKey, Boolean, Enum as SQLEnum
 
 Base = declarative_base()
+
+
+class CategoriaArticolo(str, enum.Enum):
+    ELETTRONICA = "elettronica"
+    ABBIGLIAMENTO = "abbigliamento"
+    CASA = "casa"
+    LIBRI = "libri"
 
 
 class OrderArticolo(Base):
@@ -48,7 +56,11 @@ class Articolo(Base):
     desc: Mapped[str] = mapped_column(String, nullable=False)
     prezzo: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     quantità: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
+    category: Mapped[CategoriaArticolo] = mapped_column(
+        SQLEnum(CategoriaArticolo, native_enum=False),
+        nullable=False,
+        default="elettronica",
+    )
     seller_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     seller: Mapped["User"] = relationship(back_populates="articoli_venduti")

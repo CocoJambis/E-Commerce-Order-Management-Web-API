@@ -1,4 +1,4 @@
-from .models import Base, Articolo, Order, OrderArticolo, User
+from .models import Base, Articolo, Order, OrderArticolo, User, CategoriaArticolo
 
 from .schemas import (
     UserCreate,

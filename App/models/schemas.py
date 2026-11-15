@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional
+from App.models import CategoriaArticolo
 
 
 # User Models
@@ -27,6 +28,7 @@ class ArticoloCreate(BaseModel):
     desc: str
     prezzo: float
     quantità: int
+    category: CategoriaArticolo
 
 
 class ArticoloResponse(BaseModel):
@@ -36,6 +38,7 @@ class ArticoloResponse(BaseModel):
     prezzo: float
     quantità: int
     seller_id: int
+    category: CategoriaArticolo
 
     model_config = ConfigDict(from_attributes=True)
 

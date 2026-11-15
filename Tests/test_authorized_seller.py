@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient
+from Tests.conftest import Payloads
 
 
 class Seller:
@@ -46,7 +47,7 @@ async def test_sell_article(client):
 
     headers = {"Authorization": f"Bearer {token}"}
 
-    articolo_payload = {"name": "test", "desc": "test", "prezzo": 20, "quantità": 20}
+    articolo_payload = await Payloads.articolo_payload()
 
     response_sell = await client.post(
         "/seller/sell", headers=headers, json=articolo_payload

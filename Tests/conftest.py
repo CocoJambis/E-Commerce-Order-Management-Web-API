@@ -57,7 +57,12 @@ class CreateOrderSetup:
     async def create_article(seller: User, db: AsyncSession) -> Articolo:
 
         new_article = ArticoloCreate(
-            name="Test", desc="Test", prezzo=10, quantità=20, seller_id=seller.id
+            name="Test",
+            desc="Test",
+            prezzo=10,
+            quantità=20,
+            seller_id=seller.id,
+            category="casa",
         )
 
         articolo = await ArticoloRepository.create_articolo(
@@ -69,7 +74,12 @@ class CreateOrderSetup:
     @staticmethod
     async def create_article2(seller: User, db: AsyncSession):
         new_article = ArticoloCreate(
-            name="Test2", desc="Test2", prezzo=10, quantità=20, seller_id=seller.id
+            name="Test2",
+            desc="Test2",
+            prezzo=10,
+            quantità=20,
+            seller_id=seller.id,
+            category="casa",
         )
 
         articolo = await ArticoloRepository.create_articolo(
@@ -119,6 +129,7 @@ class Payloads:
             "desc": "test",
             "prezzo": 20,
             "quantità": 20,
+            "category": "casa",
         }
 
     @staticmethod

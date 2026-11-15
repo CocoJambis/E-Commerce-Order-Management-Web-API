@@ -191,7 +191,7 @@ class ArticoloRepository:
     ) -> Articolo:
 
         result = await db.execute(
-            select(Articolo).filter(Articolo.name == articolo.name)
+            select(Articolo).where(Articolo.name == articolo.name)
         )
         articolo_exists = result.scalars().one_or_none()
 
@@ -216,6 +216,7 @@ class ArticoloRepository:
             prezzo=articolo.prezzo,
             quantità=articolo.quantità,
             seller_id=current_user.id,
+            category=articolo.category,
         )
 
         db.add(nuovo_articolo)
@@ -435,6 +436,20 @@ class ArticoloRepository:
         await db.delete(order_articolo)
         await db.commit()
         return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}, totale ordine = {order_exists.total}"
+
+    @staticmethod
+    async def find_article(db: AsyncSession, category: str = None) -> list[Articolo]:
+
+        if category:
+            result = await db.execute(
+                select(Articolo).where(Articolo.category == category)
+            )
+            articoli = result.scalars().all()
+            return articoli
+
+        result = await db.execute(select(Articolo))
+        articoli = result.scalars().all()
+        return articoli
 
 
 class OrderRepository:
