@@ -438,18 +438,21 @@ class ArticoloRepository:
         return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}, totale ordine = {order_exists.total}"
 
     @staticmethod
-    async def find_article(db: AsyncSession, category: str = None) -> list[Articolo]:
+    async def find_article(db: AsyncSession, category: str | None = None, nome: str | None = None) -> list[Articolo]:
 
+        query = select(Articolo)
+        
         if category:
-            result = await db.execute(
-                select(Articolo).where(Articolo.category == category)
-            )
-            articoli = result.scalars().all()
-            return articoli
+            query = query.where(Articolo.category == category)
 
-        result = await db.execute(select(Articolo))
+        if nome:
+            query = query.where(Articolo.name.ilike(f"%{nome}%"))
+
+        result = await db.execute(query)
         articoli = result.scalars().all()
+
         return articoli
+
 
 
 class OrderRepository:
