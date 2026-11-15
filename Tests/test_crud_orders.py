@@ -57,7 +57,7 @@ async def test_create_order_giacenza_articolo_non_disponibile(db_session):
     user = await UserRepository.create_user(db=db_session, new_user=new_user)
 
     new_articolo = ArticoloCreate(
-        name="Test", desc="Test", prezzo=10, quantità=20, category="casa"
+        name="Testttt", desc="Testttt", prezzo=10, quantità=20, category="casa"
     )
 
     await ArticoloRepository.create_articolo(
@@ -74,7 +74,10 @@ async def test_create_order_giacenza_articolo_non_disponibile(db_session):
         )
 
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Giacenza insufficente per Test. Disponibili : 20"
+    assert (
+        exc_info.value.detail
+        == f"Giacenza insufficente per {new_articolo.name}. Disponibili : 20"
+    )
 
 
 @pytest.mark.anyio

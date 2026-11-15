@@ -437,11 +437,14 @@ class ArticoloRepository:
         await db.commit()
         return f"Articolo con id : {articolo_id} eliminato dall'ordine con id : {order_exists.id}, totale ordine = {order_exists.total}"
 
+    # Cerca articoli
     @staticmethod
-    async def find_article(db: AsyncSession, category: str | None = None, nome: str | None = None) -> list[Articolo]:
+    async def find_article(
+        db: AsyncSession, category: str | None = None, nome: str | None = None
+    ) -> list[Articolo]:
 
         query = select(Articolo)
-        
+
         if category:
             query = query.where(Articolo.category == category)
 
@@ -452,7 +455,6 @@ class ArticoloRepository:
         articoli = result.scalars().all()
 
         return articoli
-
 
 
 class OrderRepository:

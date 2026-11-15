@@ -16,8 +16,8 @@ async def test_create_articolo(db_session):
     articolo = await CreateOrderSetup.create_article(seller=user, db=db_session)
 
     assert articolo is not None
-    assert articolo.name == "Test"
-    assert articolo.desc == "Test"
+    assert articolo.name == "Testttt"
+    assert articolo.desc == "Testttt"
     assert articolo.prezzo == articolo.prezzo
     assert articolo.quantità == articolo.quantità
 
@@ -48,8 +48,8 @@ async def test_list_all_articoli(db_session):
 
     assert list_articoli is not None
     assert len(list_articoli) == 2
-    assert list_articoli[0].name == "Test"
-    assert list_articoli[1].name == "Test2"
+    assert list_articoli[0].name == "Testttt"
+    assert list_articoli[1].name == "Testt2"
 
 
 @pytest.mark.anyio
@@ -357,3 +357,41 @@ async def test_delete_order_art_order_not_existing(db_session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Ordine con id 1 non trovato nei tuoi ordini"
+
+
+@pytest.mark.anyio
+async def test_search_articles_by_name(db_session):
+
+    seller = await CreateOrderSetup.create_seller(db_session)
+    await CreateOrderSetup.create_article(seller=seller, db=db_session)
+    await CreateOrderSetup.create_article2(seller=seller, db=db_session)
+
+    articoli = await ArticoloRepository.find_article(db=db_session, nome="test")
+
+    assert len(articoli) == 2
+
+
+@pytest.mark.anyio
+async def test_search_articles_by_category(db_session):
+
+    seller = await CreateOrderSetup.create_seller(db_session)
+    await CreateOrderSetup.create_article(seller=seller, db=db_session)
+    await CreateOrderSetup.create_article2(seller=seller, db=db_session)
+
+    articoli = await ArticoloRepository.find_article(db=db_session, category="casa")
+
+    assert len(articoli) == 2
+
+
+@pytest.mark.anyio
+async def test_search_articles_by_name_and_category(db_session):
+
+    seller = await CreateOrderSetup.create_seller(db_session)
+    await CreateOrderSetup.create_article(seller=seller, db=db_session)
+    await CreateOrderSetup.create_article2(seller=seller, db=db_session)
+
+    articoli = await ArticoloRepository.find_article(
+        db=db_session, category="casa", nome="test"
+    )
+
+    assert len(articoli) == 2

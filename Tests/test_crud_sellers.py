@@ -52,7 +52,7 @@ async def test_sell_article_quantita_non_valida(db_session):
 
     seller = await CreateOrderSetup.create_seller(db_session)
     articolo_create = ArticoloCreate(
-        name="test", desc="test", prezzo=10, quantità=0, category="casa"
+        name="testtt", desc="testtt", prezzo=10, quantità=0, category="casa"
     )
 
     with pytest.raises(HTTPException) as exc_info:
@@ -69,7 +69,7 @@ async def test_sell_article_prezzo_non_valido(db_session):
 
     seller = await CreateOrderSetup.create_seller(db_session)
     articolo_create = ArticoloCreate(
-        name="test", desc="test", prezzo=0, quantità=10, category="casa"
+        name="testttt", desc="testttt", prezzo=0, quantità=10, category="casa"
     )
 
     with pytest.raises(HTTPException) as exc_info:

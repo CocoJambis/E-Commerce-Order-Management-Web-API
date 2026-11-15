@@ -24,8 +24,8 @@ class UserResponse(BaseModel):
 
 # Articolo Models
 class ArticoloCreate(BaseModel):
-    name: str
-    desc: str
+    name: str = Field(min_length=5, max_length=20)
+    desc: str = Field(min_length=5, max_length=20)
     prezzo: float
     quantità: int
     category: CategoriaArticolo

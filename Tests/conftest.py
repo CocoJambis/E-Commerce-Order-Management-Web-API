@@ -57,8 +57,8 @@ class CreateOrderSetup:
     async def create_article(seller: User, db: AsyncSession) -> Articolo:
 
         new_article = ArticoloCreate(
-            name="Test",
-            desc="Test",
+            name="Testttt",
+            desc="Testttt",
             prezzo=10,
             quantità=20,
             seller_id=seller.id,
@@ -74,8 +74,8 @@ class CreateOrderSetup:
     @staticmethod
     async def create_article2(seller: User, db: AsyncSession):
         new_article = ArticoloCreate(
-            name="Test2",
-            desc="Test2",
+            name="Testt2",
+            desc="Testt2",
             prezzo=10,
             quantità=20,
             seller_id=seller.id,
@@ -125,8 +125,8 @@ class Payloads:
     async def articolo_payload() -> dict:
 
         return {
-            "name": "test",
-            "desc": "test",
+            "name": "testtt",
+            "desc": "testtt",
             "prezzo": 20,
             "quantità": 20,
             "category": "casa",
