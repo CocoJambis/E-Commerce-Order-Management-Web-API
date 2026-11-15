@@ -11,6 +11,13 @@ class CategoriaArticolo(str, enum.Enum):
     ABBIGLIAMENTO = "abbigliamento"
     CASA = "casa"
     LIBRI = "libri"
+    ELETTRODOMESTICI = "elettrodomestici"
+    AUTO = "auto"
+    MOTO = "moto"
+    IGIENE = "igiene"
+    CANE = "cane"
+    GATTO = "gatto"
+    ANIMALI_DOMESTICI = "animali domestici"
 
 
 class OrderArticolo(Base):
