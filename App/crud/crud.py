@@ -27,6 +27,8 @@ from App.models import (
     TokenData,
     User,
     UserCreate,
+    Cart,
+    CartItem
 )
 
 
@@ -456,6 +458,44 @@ class ArticoloRepository:
 
         return articoli
 
+    @staticmethod
+    async def change_price_seller(
+        current_user: User,
+        articolo_id: str,
+        nuovo_prezzo: ModificaPrezzoArticolo,
+        db: AsyncSession,
+    ):
+
+        result = await db.execute(
+            select(Articolo).where(Articolo.seller_id == current_user.id)
+        )
+        articoli = result.scalars().all()
+
+        if not articoli:
+            raise HTTPException(
+                status_code=404, detail="Non hai nessun articolo in vendita"
+            )
+
+        mappa_articoli = {art.id: art for art in articoli}
+
+        articolo = mappa_articoli.get(articolo_id)
+
+        if not articolo:
+            raise HTTPException(
+                status_code=404, detail=f"Articolo con id: {articolo_id} non trovato"
+            )
+
+        if nuovo_prezzo.prezzo <= 0:
+            raise HTTPException(status_code=400, detail="Prezzo inserito non valido")
+
+        if nuovo_prezzo.prezzo == articolo.prezzo:
+            raise HTTPException(status_code=404, detail="Prezzo inserito non valido")
+
+        articolo.prezzo = nuovo_prezzo.prezzo
+
+        await db.commit()
+        return articolo
+
 
 class OrderRepository:
     # Crea Ordine
@@ -630,3 +670,102 @@ class OrderRepository:
         dettagli = order_exists.dettagli_articoli
 
         return list(dettagli)
+
+
+class CartRepository:
+
+    @staticmethod
+    async def add_to_cart(payload: OrderArt, current_user: User, db: AsyncSession):
+
+        product = await db.get(Articolo, payload.articolo_id)
+
+        if not product:
+            raise HTTPException(status_code=404, detail="Prodotto non trovato")
+
+
+        result = await db.execute(select(Cart).where(Cart.user_id == current_user.id))
+        carrello = result.scalar_one_or_none()
+
+        if not carrello:
+            carrello = Cart(user_id= current_user.id, user_email= current_user.email, totale=0.0)
+
+            db.add(carrello)
+            await db.flush()
+
+        item_result = await db.execute(select(CartItem).where(CartItem.cart_id == carrello.id, CartItem.product_id == product.id))
+        riga_carrello = item_result.scalar_one_or_none()
+
+        nuova_quantita = (riga_carrello.quantity if riga_carrello else 0) + payload.quantità
+
+        if nuova_quantita > product.quantità:
+            raise HTTPException(status_code=400, detail=f"Disponibilità insufficente. Massimo ordinabile: {product.quantità}")
+
+
+        if riga_carrello:
+            riga_carrello.quantity = nuova_quantita
+        else:
+            riga_carrello = CartItem(
+                cart_id= carrello.id,
+                product_id = product.id,
+                quantity= payload.quantità,
+                prezzo= product.prezzo
+            )
+
+            db.add(riga_carrello)
+            carrello.totale += float(nuova_quantita) * product.prezzo
+
+        await db.commit()
+        return riga_carrello
+
+
+    @staticmethod
+    async def view_cart(current_user: User, db: AsyncSession):
+
+        result = await db.execute(
+            select(Cart)
+            .options(selectinload(Cart.items))
+            .where(Cart.user_id == current_user.id))
+        carrello = result.scalar_one_or_none()
+
+        if not carrello: 
+            return {"message" : "Il tuo carrello è vuoto!"}
+
+        return carrello.items 
+
+    @staticmethod
+    async def remove_item_from_cart(db: AsyncSession, item_id: int, current_user: User, quantity: int | None = None):
+        
+        cart_result = await db.execute(
+            select(Cart).options(selectinload(Cart.items))
+            .where(Cart.user_id == current_user.id))
+        cart = cart_result.scalar_one_or_none()
+
+        if not cart or not cart.items:
+            raise HTTPException(status_code=404, detail="Il Tuo carrello è vuoto")
+
+        items_dict = {item.product_id: item for item in cart.items}
+        cart_item = items_dict.get(item_id)
+
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="Articolo selezionato non presente nel carrello")
+
+        qty_to_remove = quantity if quantity is not None else 1
+
+        if qty_to_remove <= 0:
+            raise HTTPException(status_code=400, detail= "La quantità da rimuovere deve essere maggiore di 0")
+
+        if qty_to_remove > cart_item.quantity:
+            raise HTTPException(status_code=400, detail= "Impossibile togliere quantità maggiore")
+        
+        if cart_item.quantity - qty_to_remove <= 0:
+            cart.totale -= cart_item.prezzo * qty_to_remove
+            await db.delete(cart_item)
+        else:
+            cart_item.quantity -= qty_to_remove
+            cart.totale -= cart_item.prezzo * qty_to_remove
+        await db.commit()
+
+        return {"message" : "Carrello aggiornato con successo"}
+
+        
+

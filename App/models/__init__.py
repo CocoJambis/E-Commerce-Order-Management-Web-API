@@ -1,4 +1,4 @@
-from .models import Base, Articolo, Order, OrderArticolo, User, CategoriaArticolo
+from .models import Base, Articolo, Order, OrderArticolo, User, CategoriaArticolo, Cart, CartItem
 
 from .schemas import (
     UserCreate,
@@ -14,4 +14,5 @@ from .schemas import (
     UserLogin,
     Token,
     TokenData,
+    ArticoloCart,
 )

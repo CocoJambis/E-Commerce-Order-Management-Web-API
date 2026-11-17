@@ -43,6 +43,15 @@ class ArticoloResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ArticoloCart(BaseModel):
+    id: int
+    cart_id: int
+    product_id: int
+    quantity: int
+    prezzo: float    
+
+
+
 class ModificaPrezzoArticolo(BaseModel):
     prezzo: float
 
@@ -54,7 +63,7 @@ class ModificaGiacenzaArticolo(BaseModel):
 # Order Models
 class OrderArt(BaseModel):
     articolo_id: int
-    quantità: int
+    quantità: int = Field(gt=0)
 
 
 class OrderCreate(BaseModel):
