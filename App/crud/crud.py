@@ -739,7 +739,14 @@ class CartRepository:
         carrello = result.scalar_one_or_none()
 
         if not carrello:
-            return {"message": "Il tuo carrello è vuoto!"}
+            carrello = Cart(
+                user_id= current_user.id,
+                user_email= current_user.email
+            )
+
+            db.add(carrello)
+            await db.commit()
+            await db.refresh(carrello, attribute_names=["items"])
 
         return carrello
 
@@ -781,8 +788,11 @@ class CartRepository:
 
         if cart_item.quantity - qty_to_remove <= 0:
             await db.delete(cart_item)
+            await db.commit()
+            await db.refresh(cart)
         else:
             cart_item.quantity -= qty_to_remove
-        await db.commit()
+            await db.commit()
+            await db.refresh()
 
         return cart
