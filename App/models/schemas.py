@@ -9,7 +9,7 @@ class UserCreate(BaseModel):
     first_name: str = Field(min_length=3, max_length=20)
     last_name: str = Field(min_length=3, max_length=20)
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8, max_length=20)
 
 
 class UserResponse(BaseModel):
@@ -39,6 +39,7 @@ class ArticoloResponse(BaseModel):
     prezzo: float
     quantità: int
     seller_id: int
+    seller_name: str
     category: CategoriaArticolo
 
     model_config = ConfigDict(from_attributes=True)
@@ -51,6 +52,8 @@ class ArticoloCart(BaseModel):
     quantity: int
     prezzo: float
     subtotal: Decimal
+    name: str
+    seller_name: str
 
     model_config = ConfigDict(from_attributes=True)
 

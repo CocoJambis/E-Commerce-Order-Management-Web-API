@@ -219,6 +219,7 @@ class ArticoloRepository:
             quantità=articolo.quantità,
             seller_id=current_user.id,
             category=articolo.category,
+            seller_name= current_user.first_name
         )
 
         db.add(nuovo_articolo)
@@ -721,6 +722,8 @@ class CartRepository:
                 quantity=payload.quantità,
                 prezzo=product.prezzo,
                 product=product,
+                name= product.name,
+                seller_name= product.seller_name
             )
 
             db.add(riga_carrello)
@@ -739,10 +742,7 @@ class CartRepository:
         carrello = result.scalar_one_or_none()
 
         if not carrello:
-            carrello = Cart(
-                user_id= current_user.id,
-                user_email= current_user.email
-            )
+            carrello = Cart(user_id=current_user.id, user_email=current_user.email)
 
             db.add(carrello)
             await db.commit()

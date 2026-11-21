@@ -101,7 +101,9 @@ class CartItem(Base):
     )
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     prezzo: Mapped[float] = mapped_column(Float, nullable=False)
-
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    seller_name: Mapped[str] = mapped_column(String, nullable=False)
+    
     cart: Mapped["Cart"] = relationship(back_populates="items")
     product: Mapped["Articolo"] = relationship()
 
@@ -129,6 +131,7 @@ class Articolo(Base):
         default="elettronica",
     )
     seller_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    seller_name: Mapped[str] = mapped_column(String, nullable=False)
 
     seller: Mapped["User"] = relationship(back_populates="articoli_venduti")
 
