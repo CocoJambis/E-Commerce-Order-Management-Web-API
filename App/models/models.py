@@ -103,7 +103,7 @@ class CartItem(Base):
     prezzo: Mapped[float] = mapped_column(Float, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     seller_name: Mapped[str] = mapped_column(String, nullable=False)
-    
+
     cart: Mapped["Cart"] = relationship(back_populates="items")
     product: Mapped["Articolo"] = relationship()
 

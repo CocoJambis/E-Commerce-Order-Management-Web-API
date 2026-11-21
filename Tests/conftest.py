@@ -20,7 +20,7 @@ class CreateOrderSetup:
             first_name="Mario",
             last_name="Rossi",
             email="mario.rossi@gmail.com",
-            password="123",
+            password="12345678",
         )
         user = await UserRepository.create_user(db=db, new_user=new_user)
 
@@ -32,7 +32,7 @@ class CreateOrderSetup:
             first_name="Mario",
             last_name="Rossi",
             email="mario.rossi2@gmail.com",
-            password="123",
+            password="12345678",
         )
 
         user = await UserRepository.create_user(db=db, new_user=new_user)
@@ -46,7 +46,7 @@ class CreateOrderSetup:
             first_name="Mario",
             last_name="Rossi",
             email="mario.seller@gmail.com",
-            password="1234",
+            password="12345678",
         )
 
         seller = await UserRepository.create_seller(db=db, new_user=new_seller)
@@ -139,7 +139,7 @@ class Payloads:
             "first_name": "mario",
             "last_name": "rossi",
             "email": "mario.rossi@gmail.com",
-            "password": "123",
+            "password": "12345678",
         }
 
     @staticmethod
@@ -157,7 +157,7 @@ async def user_token(client):
     await client.post("/users/register", json=payload)
 
     response = await client.post(
-        "/users/token", data={"username": payload["email"], "password": "123"}
+        "/users/token", data={"username": payload["email"], "password": "12345678"}
     )
 
     return response.json()["access_token"]
@@ -180,7 +180,7 @@ async def admin_token(client, db_session) -> str:
     await db_session.commit()
 
     response = await client.post(
-        "/users/token", data={"username": payload["email"], "password": "123"}
+        "/users/token", data={"username": payload["email"], "password": "12345678"}
     )
 
     return response.json()["access_token"]

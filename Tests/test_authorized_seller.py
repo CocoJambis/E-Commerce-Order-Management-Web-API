@@ -11,7 +11,7 @@ class Seller:
             "first_name": "mario",
             "last_name": "rossi",
             "email": "mario.rossi@gmail.com",
-            "password": "123",
+            "password": "12345678",
         }
 
     @staticmethod
@@ -21,7 +21,7 @@ class Seller:
 
         await client.post("/seller/register/seller", json=payload)
 
-        login_payload = {"username": "mario.rossi@gmail.com", "password": "123"}
+        login_payload = {"username": "mario.rossi@gmail.com", "password": "12345678"}
 
         response = await client.post("/users/token", data=login_payload)
 

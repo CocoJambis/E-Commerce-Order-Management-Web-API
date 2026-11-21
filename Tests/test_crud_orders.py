@@ -51,7 +51,7 @@ async def test_create_order_giacenza_articolo_non_disponibile(db_session):
         first_name="Mario",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="123",
+        password="12345678",
     )
 
     user = await UserRepository.create_user(db=db_session, new_user=new_user)

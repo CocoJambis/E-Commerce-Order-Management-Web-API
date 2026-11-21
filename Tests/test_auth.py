@@ -8,7 +8,7 @@ async def test_register_user_success(client):
         "first_name": "mario",
         "last_name": "rossi",
         "email": "mario.rossi@gmail.com",
-        "password": "123",
+        "password": "12345678",
     }
 
     response = await client.post("/users/register", json=payload)
@@ -30,12 +30,12 @@ async def test_login_success(client):
         "first_name": "mario",
         "last_name": "rossi",
         "email": "mario.rossi@gmail.com",
-        "password": "123",
+        "password": "12345678",
     }
 
     await client.post("/users/register", json=payload)
 
-    login_payload = {"username": "mario.rossi@gmail.com", "password": "123"}
+    login_payload = {"username": "mario.rossi@gmail.com", "password": "12345678"}
 
     response = await client.post("/users/token", data=login_payload)
 
@@ -52,7 +52,7 @@ async def test_login_wrong_password(client):
         "first_name": "mario",
         "last_name": "rossi",
         "email": "mario.rossi@gmail.com",
-        "password": "123",
+        "password": "12345678",
     }
 
     await client.post("/users/register", json=payload)
@@ -72,12 +72,12 @@ async def test_token_access(client):
         "first_name": "mario",
         "last_name": "rossi",
         "email": "mario.rossi@gmail.com",
-        "password": "123",
+        "password": "12345678",
     }
 
     await client.post("/users/register", json=register_payload)
 
-    login_payload = {"username": "mario.rossi@gmail.com", "password": "123"}
+    login_payload = {"username": "mario.rossi@gmail.com", "password": "12345678"}
 
     response = await client.post("/users/token", data=login_payload)
     token = response.json()["access_token"]

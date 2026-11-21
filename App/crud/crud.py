@@ -219,7 +219,7 @@ class ArticoloRepository:
             quantità=articolo.quantità,
             seller_id=current_user.id,
             category=articolo.category,
-            seller_name= current_user.first_name
+            seller_name=current_user.first_name,
         )
 
         db.add(nuovo_articolo)
@@ -722,8 +722,8 @@ class CartRepository:
                 quantity=payload.quantità,
                 prezzo=product.prezzo,
                 product=product,
-                name= product.name,
-                seller_name= product.seller_name
+                name=product.name,
+                seller_name=product.seller_name,
             )
 
             db.add(riga_carrello)

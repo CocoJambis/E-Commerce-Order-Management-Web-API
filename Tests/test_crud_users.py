@@ -15,7 +15,7 @@ async def test_create_user(db_session):
         first_name="Mario",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="123",
+        password="12345678",
     )
 
     user = await UserRepository.create_user(new_user=new_user, db=db_session)
@@ -31,7 +31,7 @@ async def test_create_user_existing(db_session):
         first_name="Mario",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="123",
+        password="12345678",
     )
 
     await UserRepository.create_user(new_user=new_user, db=db_session)
@@ -40,7 +40,7 @@ async def test_create_user_existing(db_session):
         first_name="Luigi",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="123",
+        password="12345678",
     )
 
     with pytest.raises(HTTPException) as exc_info:
@@ -57,7 +57,7 @@ async def test_list_all_users(db_session):
         first_name="Mario",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="123",
+        password="12345678",
     )
 
     await UserRepository.create_user(new_user=new_user, db=db_session)
@@ -85,7 +85,7 @@ async def test_delete_user(db_session):
         first_name="Mario",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="123",
+        password="12345678",
     )
 
     await UserRepository.create_user(new_user=new_user, db=db_session)
@@ -112,7 +112,7 @@ async def test_create_seller_user(db_session):
         first_name="Mario",
         last_name="Rossi",
         email="mario.rossi@gmail.com",
-        password="1234",
+        password="12345678",
     )
 
     seller = await UserRepository.create_seller(db=db_session, new_user=new_seller)
