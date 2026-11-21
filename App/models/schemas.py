@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional
+from decimal import Decimal
 from App.models import CategoriaArticolo
 
 
@@ -48,8 +49,19 @@ class ArticoloCart(BaseModel):
     cart_id: int
     product_id: int
     quantity: int
-    prezzo: float    
+    prezzo: float
+    subtotal: Decimal
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CartOut(BaseModel):
+    id: int
+    user_id: int
+    items: list[ArticoloCart]
+    total_amount: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ModificaPrezzoArticolo(BaseModel):

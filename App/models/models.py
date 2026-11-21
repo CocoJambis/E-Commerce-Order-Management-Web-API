@@ -1,7 +1,18 @@
 import enum
+from decimal import Decimal
 from typing import List, Optional
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
-from sqlalchemy import String, Integer, Float, ForeignKey, Boolean, Enum as SQLEnum, UniqueConstraint, CheckConstraint
+from sqlalchemy import (
+    String,
+    Integer,
+    Float,
+    ForeignKey,
+    Boolean,
+    Enum as SQLEnum,
+    UniqueConstraint,
+    CheckConstraint,
+)
 
 Base = declarative_base()
 
@@ -54,21 +65,30 @@ class User(Base):
         back_populates="seller", cascade="all, delete-orphan"
     )
 
-    cart: Mapped["Cart"] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
+    cart: Mapped["Cart"] = relationship(
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class Cart(Base):
     __tablename__ = "carts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True
+    )
     user_email: Mapped[str] = mapped_column(String, nullable=False)
-    totale: Mapped[float] = mapped_column(Float, nullable=False)
-
 
     user: Mapped["User"] = relationship(back_populates="cart")
-    items: Mapped[List["CartItem"]] = relationship(back_populates="cart", cascade="all, delete-orphan")
+    items: Mapped[List["CartItem"]] = relationship(
+        back_populates="cart", cascade="all, delete-orphan"
+    )
 
+    @hybrid_property
+    def total_amount(self) -> Decimal:
+        if not self.items:
+            return Decimal("0.00")
+        return sum((item.subtotal for item in self.items), Decimal("0.00"))
 
 
 class CartItem(Base):
@@ -76,18 +96,23 @@ class CartItem(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     cart_id: Mapped[int] = mapped_column(ForeignKey("carts.id", ondelete="CASCADE"))
-    product_id: Mapped[int] = mapped_column(ForeignKey("articoli.id", ondelete="CASCADE"))
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey("articoli.id", ondelete="CASCADE")
+    )
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     prezzo: Mapped[float] = mapped_column(Float, nullable=False)
 
     cart: Mapped["Cart"] = relationship(back_populates="items")
     product: Mapped["Articolo"] = relationship()
 
-
-    __table_args__= (
+    __table_args__ = (
         UniqueConstraint("cart_id", "product_id", name="uq_cart_product"),
-        CheckConstraint("quantity > 0", name="ck_cart_item_quantity_positive")
+        CheckConstraint("quantity > 0", name="ck_cart_item_quantity_positive"),
     )
+
+    @hybrid_property
+    def subtotal(self) -> Decimal:
+        return Decimal(str(self.prezzo)) * self.quantity
 
 
 class Articolo(Base):

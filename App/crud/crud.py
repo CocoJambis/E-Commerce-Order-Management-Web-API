@@ -28,7 +28,7 @@ from App.models import (
     User,
     UserCreate,
     Cart,
-    CartItem
+    CartItem,
 )
 
 
@@ -673,7 +673,6 @@ class OrderRepository:
 
 
 class CartRepository:
-
     @staticmethod
     async def add_to_cart(payload: OrderArt, current_user: User, db: AsyncSession):
 
@@ -682,62 +681,78 @@ class CartRepository:
         if not product:
             raise HTTPException(status_code=404, detail="Prodotto non trovato")
 
-
-        result = await db.execute(select(Cart).where(Cart.user_id == current_user.id))
+        result = await db.execute(
+            select(Cart)
+            .options(selectinload(Cart.items).selectinload(CartItem.product))
+            .where(Cart.user_id == current_user.id)
+        )
         carrello = result.scalar_one_or_none()
 
         if not carrello:
-            carrello = Cart(user_id= current_user.id, user_email= current_user.email, totale=0.0)
+            carrello = Cart(user_id=current_user.id, user_email=current_user.email)
 
             db.add(carrello)
             await db.flush()
 
-        item_result = await db.execute(select(CartItem).where(CartItem.cart_id == carrello.id, CartItem.product_id == product.id))
+        item_result = await db.execute(
+            select(CartItem)
+            .options(selectinload(CartItem.product))
+            .where(CartItem.cart_id == carrello.id, CartItem.product_id == product.id)
+        )
         riga_carrello = item_result.scalar_one_or_none()
 
-        nuova_quantita = (riga_carrello.quantity if riga_carrello else 0) + payload.quantità
+        nuova_quantita = (
+            riga_carrello.quantity if riga_carrello else 0
+        ) + payload.quantità
 
         if nuova_quantita > product.quantità:
-            raise HTTPException(status_code=400, detail=f"Disponibilità insufficente. Massimo ordinabile: {product.quantità}")
-
+            raise HTTPException(
+                status_code=400,
+                detail=f"Disponibilità insufficente. Massimo ordinabile: {product.quantità}",
+            )
 
         if riga_carrello:
             riga_carrello.quantity = nuova_quantita
+            riga_carrello.prezzo = product.prezzo
         else:
             riga_carrello = CartItem(
-                cart_id= carrello.id,
-                product_id = product.id,
-                quantity= payload.quantità,
-                prezzo= product.prezzo
+                cart_id=carrello.id,
+                product_id=product.id,
+                quantity=payload.quantità,
+                prezzo=product.prezzo,
+                product=product,
             )
 
             db.add(riga_carrello)
-            carrello.totale += float(nuova_quantita) * product.prezzo
 
         await db.commit()
         return riga_carrello
-
 
     @staticmethod
     async def view_cart(current_user: User, db: AsyncSession):
 
         result = await db.execute(
             select(Cart)
-            .options(selectinload(Cart.items))
-            .where(Cart.user_id == current_user.id))
+            .options(selectinload(Cart.items).selectinload(CartItem.product))
+            .where(Cart.user_id == current_user.id)
+        )
         carrello = result.scalar_one_or_none()
 
-        if not carrello: 
-            return {"message" : "Il tuo carrello è vuoto!"}
+        if not carrello:
+            return {"message": "Il tuo carrello è vuoto!"}
 
-        return carrello.items 
+        return carrello
 
     @staticmethod
-    async def remove_item_from_cart(db: AsyncSession, item_id: int, current_user: User, quantity: int | None = None):
-        
+    async def remove_item_from_cart(
+        db: AsyncSession, item_id: int, current_user: User, quantity: int | None = None
+    ):
+
         cart_result = await db.execute(
-            select(Cart).options(selectinload(Cart.items))
-            .where(Cart.user_id == current_user.id))
+            select(Cart)
+            .options(selectinload(Cart.items).selectinload(CartItem.product))
+            .where(Cart.user_id == current_user.id)
+        )
         cart = cart_result.scalar_one_or_none()
 
         if not cart or not cart.items:
@@ -747,25 +762,27 @@ class CartRepository:
         cart_item = items_dict.get(item_id)
 
         if not cart_item:
-            raise HTTPException(status_code=404, detail="Articolo selezionato non presente nel carrello")
+            raise HTTPException(
+                status_code=404, detail="Articolo selezionato non presente nel carrello"
+            )
 
         qty_to_remove = quantity if quantity is not None else 1
 
         if qty_to_remove <= 0:
-            raise HTTPException(status_code=400, detail= "La quantità da rimuovere deve essere maggiore di 0")
+            raise HTTPException(
+                status_code=400,
+                detail="La quantità da rimuovere deve essere maggiore di 0",
+            )
 
         if qty_to_remove > cart_item.quantity:
-            raise HTTPException(status_code=400, detail= "Impossibile togliere quantità maggiore")
-        
+            raise HTTPException(
+                status_code=400, detail="Impossibile togliere quantità maggiore"
+            )
+
         if cart_item.quantity - qty_to_remove <= 0:
-            cart.totale -= cart_item.prezzo * qty_to_remove
             await db.delete(cart_item)
         else:
             cart_item.quantity -= qty_to_remove
-            cart.totale -= cart_item.prezzo * qty_to_remove
         await db.commit()
 
-        return {"message" : "Carrello aggiornato con successo"}
-
-        
-
+        return cart
